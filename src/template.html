@@ -245,6 +245,7 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
           <button role="tab" aria-selected="true" data-tab="sheet">Numbered sheet</button>
           <button role="tab" aria-selected="false" data-tab="key">Color key</button>
           <button role="tab" aria-selected="false" data-tab="over">Over photo</button>
+          <button role="tab" aria-selected="false" data-tab="legend">Legend</button>
         </div>
         <div class="tools">
           <label class="fade" id="fadewrap" hidden>Photo fade <input type="range" id="fade" min="20" max="90" value="60"></label>
@@ -300,25 +301,30 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
       <li><b>Numbered sheet:</b> white regions with outlines and numbers, like a classic paint-by-number page.</li>
       <li><b>Color key:</b> every region filled with its final color, so you can see the finished look.</li>
       <li><b>Over photo:</b> the lines and numbers on a faded copy of your photo. Use <b>Photo fade</b> to choose how strongly the photo shows through.</li>
+      <li><b>Legend:</b> every color as a large numbered chip, in the same order as the swatches. Palettes with more than 30 colors are grouped in sets of 30, matching the separate swatch files.</li>
     </ul>
     <p class="soft"><b>Actual size</b> shows the result at full resolution so you can check that numbers are readable. Click any color chip under the preview to copy its hex code.</p>
 
     <h3>What is in the zip</h3>
     <table class="tbl">
-      <tr><th><code>underpaint.psd</code></th><td>The layered file for Procreate or Fresco. Layers from top to bottom: <b>Lines + numbers</b>, <b>Paint here</b> (empty), <b>Paper</b>, and a hidden <b>Color key (hidden)</b> reference you can turn on to see the intended colors.</td></tr>
+      <tr><th><code>underpaint.psd</code></th><td>The layered file for Procreate or Fresco. Layers from top to bottom: <b>Lines + numbers</b>, <b>Paint here</b> (empty), <b>Paper</b>, and two hidden reference layers: <b>Color key + numbers</b> and a plain <b>Color key</b>. Turn one on to see the intended colors.</td></tr>
       <tr><th><code>numbered_sheet.png</code></th><td>The numbered page as a flat image, for printing.</td></tr>
       <tr><th><code>lines_and_numbers_transparent.png</code></th><td>Just the outlines and numbers on a transparent background, to place over any canvas.</td></tr>
       <tr><th><code>lines_over_photo.png</code></th><td>Lines and numbers over your faded photo.</td></tr>
       <tr><th><code>color_key.png</code></th><td>The flat-color version, for reference.</td></tr>
+      <tr><th><code>color_key_numbered.png</code></th><td>The flat-color version with each region's number on it.</td></tr>
+      <tr><th><code>legend.png</code></th><td>Large numbered color chips in swatch order. Open it in Procreate's Reference window while you paint (see below).</td></tr>
       <tr><th><code>palette.txt</code></th><td>The numbered list of hex colors.</td></tr>
-      <tr><th><code>palette.swatches</code></th><td>The same colors as a Procreate palette (the first 30 colors). See the note below.</td></tr>
+      <tr><th><code>palette_1-24.swatches</code></th><td>The same colors as a Procreate palette, in number order. Procreate palettes hold 30 colors, so a longer list is split into several files (for example <code>palette_1-30.swatches</code> and <code>palette_31-48.swatches</code>).</td></tr>
     </table>
 
     <h3>Painting in Procreate or Fresco</h3>
     <ul>
       <li><b>Open the PSD.</b> In Procreate, use Import in the Gallery and choose <code>underpaint.psd</code>. In Fresco, open it from your device&rsquo;s files. Layers are kept.</li>
       <li><b>Paint on "Paint here."</b> Keep the lines layer above it. To fill whole regions quickly, use a fill tool that can look at another layer. In Procreate, set the Lines layer as the Reference layer so a color drop fills right up to the outlines.</li>
-      <li><b>Load your colors.</b> Procreate can import <code>palette.swatches</code> (tap the file in the Files app and choose to open it in Procreate), then each number matches a swatch. Procreate palettes in this file hold up to 30 colors, so for larger palettes use <code>palette.txt</code> for the rest. <b>This file is new and has not been tested in Procreate yet</b>; if it does not import, type the hex codes from <code>palette.txt</code> or tap the colors on the Color key layer.</li>
+      <li><b>Match colors to numbers.</b> A Procreate palette shows colors without numbers, so keep <code>legend.png</code> in view: in Procreate, open the Canvas settings, choose Reference, and import the image. It floats over your canvas and shows which number is which color. In Fresco, keep the legend open in another window or on a second device.</li>
+      <li><b>Or pick by number from the canvas.</b> Turn on the <b>Color key + numbers</b> layer, find a region's number, then use the eyedropper on a spot next to the number to pick up its color. Turn the layer off again before painting.</li>
+      <li><b>Load your palette.</b> Procreate can import the <code>.swatches</code> files (tap a file in the Files app and choose to open it in Procreate). Swatches are in number order: the first swatch is number 1. A palette with more than 30 colors comes as several files; import each one. <b>These files have only been tested to import, not for every Procreate version</b>; if one does not, type the hex codes from <code>palette.txt</code>.</li>
       <li><b>Hide the numbers when you finish</b> by turning off the Lines layer. Or keep the lines as a stylistic choice.</li>
       <li><b>As a base, not a rule.</b> The regions are a starting point. Blend, repaint and add detail on top; the image does not have to look like a paint-by-number.</li>
     </ul>
@@ -495,9 +501,16 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
     });
     var sheet = mk(), sg = sheet.getContext("2d");
     sg.fillStyle = "#fff"; sg.fillRect(0, 0, w, h); sg.drawImage(lines, 0, 0);
+    var keyNum = mk(), ng = keyNum.getContext("2d");
+    ng.drawImage(key, 0, 0); ng.textAlign = "center"; ng.textBaseline = "middle";
+    r.placements.forEach(function (p) {
+      ng.fillStyle = inkFor(pal[p.n - 1]);
+      ng.font = "500 " + Math.max(5, p.size).toFixed(1) + 'px "Helvetica Neue", Arial, sans-serif';
+      ng.fillText(String(p.n), p.x, p.y + p.size * 0.04);
+    });
     state.result = r;
     state.photo = photo;
-    state.canvases = { sheet: sheet, key: key, lines: lines };
+    state.canvases = { sheet: sheet, key: key, keyNum: keyNum, lines: lines, legend: makeLegend(pal) };
     composeOver();
     $("busy").hidden = true;
     ["dlzip", "dlsheet", "dlkey"].forEach(function (id) { $(id).disabled = !state.downloads; });
@@ -515,6 +528,40 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
       state.urls.preview = URL.createObjectURL(b);
       $("preview").src = state.urls.preview;
     }, "image/png");
+  }
+  function inkFor(c) { return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255 > 0.55 ? "#111111" : "#ffffff"; }
+  // Numbered chips in palette order, grouped 30 to a Procreate palette; sized for the Reference window.
+  function makeLegend(pal) {
+    var cols = 5, cw = 300, ch = 140, gap = 24, pad = 32, per = 30;
+    var groups = []; for (var s = 0; s < pal.length; s += per) groups.push(pal.slice(s, s + per));
+    var W = pad * 2 + cols * cw + (cols - 1) * gap, y = pad + 64, i;
+    var H = y; groups.forEach(function (gp) { H += (groups.length > 1 ? 56 : 0) + Math.ceil(gp.length / cols) * (ch + gap) + 12; });
+    H += pad - gap;
+    var c = document.createElement("canvas"); c.width = W; c.height = H;
+    var g = c.getContext("2d");
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#151b26"; g.textBaseline = "alphabetic"; g.textAlign = "left";
+    g.font = '600 34px "Helvetica Neue", Arial, sans-serif';
+    g.fillText("Underpaint legend: " + pal.length + " colors", pad, pad + 34);
+    groups.forEach(function (gp, gi) {
+      if (groups.length > 1) {
+        g.fillStyle = "#566074"; g.font = '600 26px "Helvetica Neue", Arial, sans-serif';
+        g.fillText("Palette " + (gi + 1) + ": numbers " + (gi * per + 1) + " to " + (gi * per + gp.length), pad, y + 30);
+        y += 56;
+      }
+      gp.forEach(function (col, k) {
+        var x = pad + (k % cols) * (cw + gap), yy = y + Math.floor(k / cols) * (ch + gap);
+        g.fillStyle = hexOf(col); g.fillRect(x, yy, cw, ch);
+        g.strokeStyle = "rgba(0,0,0,.25)"; g.lineWidth = 2; g.strokeRect(x + 1, yy + 1, cw - 2, ch - 2);
+        g.fillStyle = inkFor(col); g.textAlign = "left";
+        g.font = '700 76px "Helvetica Neue", Arial, sans-serif'; g.textBaseline = "alphabetic";
+        g.fillText(String(gi * per + k + 1), x + 20, yy + 84);
+        g.font = '500 24px Menlo, Consolas, monospace';
+        g.fillText(hexOf(col), x + 20, yy + ch - 20);
+      });
+      y += Math.ceil(gp.length / cols) * (ch + gap) + 12;
+    });
+    return c;
   }
   function drawPalette(pal) {
     var box = $("palette"); box.textContent = "";
@@ -567,15 +614,24 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
   function bytesOfCanvas(cv) {
     return new Promise(function (res) { cv.toBlob(function (b) { b.arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }); }, "image/png"); });
   }
-  function swatchesBytes(pal) {
-    var list = pal.map(function (c) {
+  function swatchBytes(chunk, label) {
+    var list = chunk.map(function (c) {
       var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = 0;
       if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h /= 6; if (h < 0) h += 1; }
       return { hue: h, saturation: mx ? d / mx : 0, brightness: mx, alpha: 1, origin: 2, colorSpace: 0, timestamp: 0 };
     });
     while (list.length < 30) list.push(null);
-    var json = new TextEncoder().encode(JSON.stringify([{ name: "Underpaint", swatches: list.slice(0, 30) }]));
+    var json = new TextEncoder().encode(JSON.stringify([{ name: "Underpaint " + label, swatches: list }]));
     return new Promise(function (res) { makeZip([{ name: "Swatches.json", data: json }]).arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }); });
+  }
+  // One Procreate palette holds 30 colors, so longer palettes become several files, in number order.
+  async function swatchFiles(pal) {
+    var out = [];
+    for (var s = 0; s < pal.length; s += 30) {
+      var chunk = pal.slice(s, s + 30), label = (s + 1) + "-" + (s + chunk.length);
+      out.push({ name: "palette_" + label + ".swatches", data: await swatchBytes(chunk, label) });
+    }
+    return out;
   }
 
   // ---------- downloads ----------
@@ -594,6 +650,7 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
       width: w, height: h,
       children: [
         { name: "Color key (hidden)", hidden: true, imageData: layerData(cv.key) },
+        { name: "Color key + numbers (hidden)", hidden: true, imageData: layerData(cv.keyNum) },
         { name: "Paper", imageData: white },
         { name: "Paint here", imageData: blank },
         { name: "Lines + numbers", imageData: layerData(cv.lines) }
@@ -609,9 +666,10 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
       { name: "lines_and_numbers_transparent.png", data: await bytesOfCanvas(cv.lines) },
       { name: "lines_over_photo.png", data: await bytesOfCanvas(cv.over) },
       { name: "color_key.png", data: await bytesOfCanvas(cv.key) },
-      { name: "palette.txt", data: enc.encode(hexList) },
-      { name: "palette.swatches", data: await swatchesBytes(r.palette) }
-    ]);
+      { name: "color_key_numbered.png", data: await bytesOfCanvas(cv.keyNum) },
+      { name: "legend.png", data: await bytesOfCanvas(cv.legend) },
+      { name: "palette.txt", data: enc.encode(hexList) }
+    ].concat(await swatchFiles(r.palette)));
   }
   function stem() { return (state.srcName || "sample").replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_").slice(0, 40) || "photo"; }
 
