@@ -4,6 +4,12 @@ Turn a photo into flat, numbered color regions and a layered PSD (lines and numb
 
 Live site: https://underpaint.netlify.app/
 
+## Using it
+
+Click **Help** in the top right of the app for a built-in guide: quick start, what every control does, what is in the downloaded zip, painting tips for Procreate and Fresco, and troubleshooting. The help text lives in the `<dialog id="help">` block of `src/template.html`; edit it there and rebuild.
+
+Notes: `palette.swatches` (a Procreate palette, limited to the first 30 colors) has not yet been tested in Procreate. The PSD layers are, top to bottom: Lines + numbers, Paint here, Paper, and a hidden Color key.
+
 ## Layout
 
 - `index.html`: the built, self-contained app. This is what gets deployed.

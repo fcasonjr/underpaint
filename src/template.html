@@ -114,13 +114,47 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: var(--ink); color: var(--ground); padding: 9px 14px; border-radius: 8px; font-size: 13.5px; z-index: 5;
   max-width: calc(100% - 32px);
 }
+
+header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: flex-start; justify-content: space-between; }
+header .intro { flex: 1 1 420px; min-width: 0; }
+.helpbtn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; }
+.helpbtn i { font: 600 13px var(--font-display); font-style: normal; width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); }
+dialog.help {
+  width: min(760px, calc(100% - 24px)); max-height: min(86vh, 900px); padding: 0; border: 1px solid var(--rule);
+  border-radius: 12px; background: var(--panel); color: var(--ink); overflow: hidden;
+}
+dialog.help[open] { display: flex; flex-direction: column; }
+dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
+.help-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--rule); }
+.help-head h2 { font: 600 22px/1.1 var(--font-display); margin: 0; }
+.help-body { overflow-y: auto; padding: 6px 18px 20px; overscroll-behavior: contain; }
+.help-body h3 { font: 600 17px/1.2 var(--font-display); margin: 22px 0 8px; }
+.help-body p, .help-body li { color: var(--ink); }
+.help-body p { margin: 0 0 10px; }
+.help-body ol, .help-body ul { margin: 0 0 10px; padding-left: 22px; display: grid; gap: 6px; }
+.help-body .soft { color: var(--ink-soft); font-size: 13.5px; }
+.help-body dl { margin: 0; display: grid; gap: 10px; }
+.help-body dt { font-weight: 600; }
+.help-body dd { margin: 2px 0 0; color: var(--ink-soft); }
+.help-body details { border: 1px solid var(--rule); border-radius: 8px; padding: 0 12px; margin-bottom: 8px; background: var(--well); }
+.help-body summary { cursor: pointer; font-weight: 600; padding: 10px 0; }
+.help-body details p { color: var(--ink-soft); }
+.help-body kbd, .help-body code { font: 500 12.5px var(--font-mono); background: var(--well); border: 1px solid var(--rule); border-radius: 4px; padding: 1px 5px; }
+.help-body .tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 10px; }
+.help-body .tbl th, .help-body .tbl td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.help-body .tbl th { font-weight: 600; white-space: nowrap; }
+.help-body .tbl code { white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .track i { transition: none; } }
 </style>
 
 <div class="wrap">
   <header>
-    <h1>Underpaint</h1>
-    <p>Turn a photo into flat, numbered color regions: a ready-made underpainting to build on in Procreate or Fresco. Your photo is processed in this tab and never uploaded.</p>
+    <div class="intro">
+      <h1>Underpaint</h1>
+      <p>Turn a photo into flat, numbered color regions: a ready-made underpainting to build on in Procreate or Fresco. Your photo is processed in this tab and never uploaded.</p>
+    </div>
+    <button type="button" class="helpbtn" id="helpbtn" aria-haspopup="dialog"><i aria-hidden="true">?</i> Help</button>
   </header>
 
   <div class="grid">
@@ -226,6 +260,87 @@ button:disabled { opacity: .45; cursor: not-allowed; }
     </section>
   </div>
 </div>
+<dialog class="help" id="help" aria-labelledby="helptitle">
+  <div class="help-head">
+    <h2 id="helptitle">Using Underpaint</h2>
+    <button type="button" id="helpclose">Close</button>
+  </div>
+  <div class="help-body">
+
+    <h3>Quick start</h3>
+    <ol>
+      <li><b>Add a photo.</b> Drop one on the box at the top left, or click it to choose a file (JPG, PNG or WebP). Until then you are looking at a sample scene.</li>
+      <li><b>Pick a preset</b> and look at the preview. Adjust any slider to fine-tune; the preview updates by itself a moment after you stop moving it.</li>
+      <li><b>Download the layered set (.zip)</b>, unzip it, and open <code>underpaint.psd</code> in Procreate or Fresco.</li>
+      <li><b>Paint on the layer named "Paint here."</b> The lines and numbers sit on a separate layer above it, so your color never covers them.</li>
+    </ol>
+
+    <h3>Presets</h3>
+    <table class="tbl">
+      <tr><th>Balanced</th><td>A good starting point for most photos: 24 colors, medium detail.</td></tr>
+      <tr><th>Easy to paint</th><td>12 colors and big shapes. Fewer, larger regions for a relaxed, loose painting.</td></tr>
+      <tr><th>Portrait</th><td>32 colors, a larger output, and extra detail around faces. Flattens a plain backdrop.</td></tr>
+      <tr><th>Detailed scene</th><td>48 colors, fine regions and a large output, for landscapes and buildings. Leaves the backdrop alone.</td></tr>
+      <tr><th>Custom</th><td>Shown automatically once you move any slider yourself.</td></tr>
+    </table>
+
+    <h3>What each control does</h3>
+    <dl>
+      <div><dt>Colors (6 to 64)</dt><dd>How many paint colors the photo is reduced to. Fewer is easier and more graphic; more is more realistic and more work.</dd></div>
+      <div><dt>Region size (1 to 5)</dt><dd>The smallest shape that gets its own number. Low values merge small shapes into their neighbors for big, simple areas. High values keep fine detail, with smaller numbers.</dd></div>
+      <div><dt>Smoothing (0 to 3)</dt><dd>Calms noisy edges and speckle. Higher gives cleaner, rounder shapes; 0 keeps every wobble of the photo, which is best for textured subjects.</dd></div>
+      <div><dt>Detail focus (0 to 3)</dt><dd>Spends more of your colors on busy areas such as stone, leaves and faces instead of large smooth skies. Raise it when a photo loses detail you care about.</dd></div>
+      <div><dt>Output size</dt><dd>The longer side of the result in pixels. Larger gives smaller, sharper numbers and a bigger file. Smaller photos are enlarged up to 2× so tiny regions have room for a number.</dd></div>
+      <div><dt>Line weight</dt><dd>Thickness of the outlines: Fine, Medium or Bold. Bold is easier to see on a small screen; Fine suits high-detail results.</dd></div>
+      <div><dt>Flatten the backdrop</dt><dd>Turns a plain studio background into one flat region, which also removes watermarks and noise on it. <b>Backdrop tolerance</b> sets how different a color may be and still count as backdrop. Turn it off for scenes with no plain background.</dd></div>
+    </dl>
+
+    <h3>The preview tabs</h3>
+    <ul>
+      <li><b>Numbered sheet:</b> white regions with outlines and numbers, like a classic paint-by-number page.</li>
+      <li><b>Color key:</b> every region filled with its final color, so you can see the finished look.</li>
+      <li><b>Over photo:</b> the lines and numbers on a faded copy of your photo. Use <b>Photo fade</b> to choose how strongly the photo shows through.</li>
+    </ul>
+    <p class="soft"><b>Actual size</b> shows the result at full resolution so you can check that numbers are readable. Click any color chip under the preview to copy its hex code.</p>
+
+    <h3>What is in the zip</h3>
+    <table class="tbl">
+      <tr><th><code>underpaint.psd</code></th><td>The layered file for Procreate or Fresco. Layers from top to bottom: <b>Lines + numbers</b>, <b>Paint here</b> (empty), <b>Paper</b>, and a hidden <b>Color key (hidden)</b> reference you can turn on to see the intended colors.</td></tr>
+      <tr><th><code>numbered_sheet.png</code></th><td>The numbered page as a flat image, for printing.</td></tr>
+      <tr><th><code>lines_and_numbers_transparent.png</code></th><td>Just the outlines and numbers on a transparent background, to place over any canvas.</td></tr>
+      <tr><th><code>lines_over_photo.png</code></th><td>Lines and numbers over your faded photo.</td></tr>
+      <tr><th><code>color_key.png</code></th><td>The flat-color version, for reference.</td></tr>
+      <tr><th><code>palette.txt</code></th><td>The numbered list of hex colors.</td></tr>
+      <tr><th><code>palette.swatches</code></th><td>The same colors as a Procreate palette (the first 30 colors). See the note below.</td></tr>
+    </table>
+
+    <h3>Painting in Procreate or Fresco</h3>
+    <ul>
+      <li><b>Open the PSD.</b> In Procreate, use Import in the Gallery and choose <code>underpaint.psd</code>. In Fresco, open it from your device&rsquo;s files. Layers are kept.</li>
+      <li><b>Paint on "Paint here."</b> Keep the lines layer above it. To fill whole regions quickly, use a fill tool that can look at another layer. In Procreate, set the Lines layer as the Reference layer so a color drop fills right up to the outlines.</li>
+      <li><b>Load your colors.</b> Procreate can import <code>palette.swatches</code> (tap the file in the Files app and choose to open it in Procreate), then each number matches a swatch. Procreate palettes in this file hold up to 30 colors, so for larger palettes use <code>palette.txt</code> for the rest. <b>This file is new and has not been tested in Procreate yet</b>; if it does not import, type the hex codes from <code>palette.txt</code> or tap the colors on the Color key layer.</li>
+      <li><b>Hide the numbers when you finish</b> by turning off the Lines layer. Or keep the lines as a stylistic choice.</li>
+      <li><b>As a base, not a rule.</b> The regions are a starting point. Blend, repaint and add detail on top; the image does not have to look like a paint-by-number.</li>
+    </ul>
+
+    <h3>Tips for good results</h3>
+    <ul>
+      <li>Start with a sharp, well-lit photo. Blurry photos give wobbly regions.</li>
+      <li>If a face or key object turns blobby, raise <b>Detail focus</b> and <b>Region size</b>, and lower <b>Smoothing</b>.</li>
+      <li>If there are too many tiny numbers to paint, lower <b>Region size</b> or <b>Colors</b>, or raise <b>Smoothing</b>.</li>
+      <li>For a very small output (1000 px), numbers in tiny regions may be hard to read. Use 1600 or 2400 for detailed photos.</li>
+      <li>Crop the photo to your subject first. The tool works on the whole image, so a tight crop spends your colors where they matter.</li>
+    </ul>
+
+    <h3>Questions and problems</h3>
+    <details><summary>Is my photo uploaded anywhere?</summary><p>No. Everything happens inside this browser tab on your own device. The photo is never sent to a server. Closing the tab clears it.</p></details>
+    <details><summary>Nothing happens, or it says processing failed.</summary><p>Very large photos on phones can run out of memory. Try a smaller Output size (1000 or 1600) and fewer colors, or crop the photo before adding it.</p></details>
+    <details><summary>Why are some regions missing numbers?</summary><p>Regions too small for a readable number are merged into a neighbor, so every region you see has its own number. Raise <b>Region size</b> or <b>Output size</b> to keep smaller shapes.</p></details>
+    <details><summary>Two neighbouring regions look like the same color.</summary><p>Several close shades can map to nearby palette colors. Lower the <b>Colors</b> setting to group them, or compare the swatch numbers in the Color key.</p></details>
+    <details><summary>The backdrop is wrong: either not flat, or flat when it should not be.</summary><p>Flattening only applies to a plain backdrop that touches the photo's edges and covers a good share of the image. Raise <b>Backdrop tolerance</b> to include more of it, or untick the option for scenes without a plain background.</p></details>
+    <details><summary>Can I use it offline?</summary><p>Once the page has loaded, processing needs no connection. The page loads its fonts from the web, so without a connection it falls back to your system fonts.</p></details>
+  </div>
+</dialog>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script type="text/plain" id="core-src">/*__CORE__*/</script>
@@ -582,6 +697,19 @@ button:disabled { opacity: .45; cursor: not-allowed; }
     this.setAttribute("aria-pressed", on ? "true" : "false");
     this.textContent = on ? "Fit to window" : "Actual size";
   });
+
+  // ---------- help dialog ----------
+  (function () {
+    var dlg = $("help"), opener = $("helpbtn");
+    function open() {
+      if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+      dlg.querySelector(".help-body").scrollTop = 0;
+    }
+    function close() { if (typeof dlg.close === "function") dlg.close(); else dlg.removeAttribute("open"); opener.focus(); }
+    opener.addEventListener("click", open);
+    $("helpclose").addEventListener("click", close);
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) close(); });
+  })();
 
   // ---------- downloads capability (lights up when available) ----------
   try {
