@@ -1,0 +1,604 @@
+<title>Underpaint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a narrow control rail beside one large preview; stacks on phones. */
+:root {
+  --ground: #e9edf2;
+  --panel: #ffffff;
+  --ink: #151b26;
+  --ink-soft: #566074;
+  --rule: #d2d9e3;
+  --accent: #2742d6;
+  --accent-ink: #ffffff;
+  --well: #f3f5f8;
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0f131a; --panel: #171d27; --ink: #e8ecf3; --ink-soft: #9aa5b8;
+    --rule: #2a3343; --accent: #8da2ff; --accent-ink: #0d1330; --well: #10151d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0f131a; --panel: #171d27; --ink: #e8ecf3; --ink-soft: #9aa5b8;
+  --rule: #2a3343; --accent: #8da2ff; --accent-ink: #0d1330; --well: #10151d;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--ground); color: var(--ink);
+  font: 400 15px/1.5 var(--font-body);
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1280px; margin: 0 auto; }
+header { margin-bottom: 22px; }
+h1 { font: 600 clamp(26px, 4vw, 38px)/1.05 var(--font-display); letter-spacing: -0.01em; margin: 0 0 6px; text-wrap: balance; }
+header p { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+.grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel, .stage { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
+.panel { padding: 16px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.drop {
+  border: 1.5px dashed var(--rule); border-radius: 8px; background: var(--well);
+  padding: 16px; text-align: center; cursor: pointer; display: grid; gap: 4px;
+}
+.drop:hover, .drop.over { border-color: var(--accent); }
+.drop strong { font: 600 16px var(--font-display); }
+.drop span { color: var(--ink-soft); font-size: 13px; }
+.field { display: grid; gap: 6px; }
+.field .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+label, .lab { font-weight: 600; font-size: 13px; }
+output { font: 500 13px var(--font-mono); color: var(--ink-soft); }
+.hint { font-size: 12px; color: var(--ink-soft); display: flex; justify-content: space-between; }
+input[type=range] { width: 100%; accent-color: var(--accent); margin: 2px 0; }
+select {
+  font: inherit; color: var(--ink); background: var(--well); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 7px 8px; width: 100%;
+}
+.check { display: flex; gap: 8px; align-items: center; font-weight: 600; font-size: 13px; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+.dl { display: grid; gap: 8px; }
+button {
+  font: 600 14px var(--font-body); border-radius: 7px; padding: 10px 12px; cursor: pointer;
+  border: 1px solid var(--rule); background: var(--panel); color: var(--ink);
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.note { font-size: 12.5px; color: var(--ink-soft); margin: 0; }
+.stage { padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.tabs { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; max-width: 100%; overflow-x: auto; }
+.tabs button { white-space: nowrap; }
+.tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fade { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.fade input { width: 110px; margin: 0; }
+.tabs button { border: 0; border-radius: 0; background: var(--panel); padding: 8px 12px; font-weight: 500; }
+.tabs button + button { border-left: 1px solid var(--rule); }
+.tabs button[aria-selected=true] { background: var(--accent); color: var(--accent-ink); }
+.viewer {
+  position: relative; background: var(--well); border: 1px solid var(--rule); border-radius: 8px;
+  overflow: auto; max-height: 78vh; display: grid; place-items: center; min-height: 260px;
+}
+.viewer img { display: block; max-width: 100%; max-height: 74vh; width: auto; height: auto; object-fit: contain; }
+.viewer.actual { place-items: start; }
+.viewer.actual img { max-width: none; max-height: none; }
+.busy {
+  position: absolute; inset: 0; display: grid; place-content: center; gap: 10px; text-align: center;
+  background: color-mix(in srgb, var(--well) 82%, transparent); font-weight: 600;
+}
+.track { width: 220px; height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+.track i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.stats { font: 400 12.5px var(--font-mono); color: var(--ink-soft); }
+.palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 8px; }
+.chip {
+  border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; padding: 0; background: var(--panel);
+  text-align: left; font-weight: 400;
+}
+.chip b { display: block; font: 600 17px var(--font-display); padding: 10px 8px; }
+.chip code { display: block; font: 400 11px var(--font-mono); padding: 4px 8px 6px; color: var(--ink-soft); }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--ground); padding: 9px 14px; border-radius: 8px; font-size: 13.5px; z-index: 5;
+  max-width: calc(100% - 32px);
+}
+@media (prefers-reduced-motion: reduce) { .track i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Underpaint</h1>
+    <p>Turn a photo into flat, numbered color regions: a ready-made underpainting to build on in Procreate or Fresco. Your photo is processed in this tab and never uploaded.</p>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-label="Controls">
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a photo">
+        <strong>Drop a photo here</strong>
+        <span id="srcname">or click to choose a file. Showing a sample scene.</span>
+        <input type="file" id="file" accept="image/*" hidden>
+      </div>
+
+      <div class="field">
+        <label for="preset">Preset</label>
+        <select id="preset">
+          <option value="balanced" selected>Balanced</option>
+          <option value="easy">Easy to paint</option>
+          <option value="portrait">Portrait</option>
+          <option value="scene">Detailed scene</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <div class="row"><label for="k">Colors</label><output id="kv">24</output></div>
+        <input type="range" id="k" min="6" max="64" value="24">
+        <div class="hint"><span>Easier</span><span>More realistic</span></div>
+      </div>
+
+      <div class="field">
+        <div class="row"><label for="detail">Region size</label><output id="detailv">3</output></div>
+        <input type="range" id="detail" min="1" max="5" value="3">
+        <div class="hint"><span>Big shapes</span><span>Fine detail</span></div>
+      </div>
+
+      <div class="field">
+        <div class="row"><label for="smooth">Smoothing</label><output id="smoothv">2</output></div>
+        <input type="range" id="smooth" min="0" max="3" value="2">
+        <div class="hint"><span>Off</span><span>Calmer edges</span></div>
+      </div>
+
+      <div class="field">
+        <div class="row"><label for="focus">Detail focus</label><output id="focusv">1</output></div>
+        <input type="range" id="focus" min="0" max="3" value="1">
+        <div class="hint"><span>Even</span><span>Favor detailed areas</span></div>
+        <p class="note">Spends more of the colors on textured areas like stone, foliage and faces instead of big smooth skies.</p>
+      </div>
+
+      <div class="split">
+        <div class="field">
+          <label for="size">Output size</label>
+          <select id="size">
+            <option value="1000">1000 px</option>
+            <option value="1600" selected>1600 px</option>
+            <option value="2400">2400 px</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="line">Line weight</label>
+          <select id="line">
+            <option value="1">Fine</option>
+            <option value="1.6" selected>Medium</option>
+            <option value="2.6">Bold</option>
+          </select>
+        </div>
+      </div>
+      <p class="note" style="margin-top:-8px">Smaller photos are enlarged up to 2× so tiny details have room for numbers.</p>
+
+      <div class="field">
+        <label class="check"><input type="checkbox" id="flatten" checked> Flatten the backdrop to one color</label>
+        <div class="row"><span class="lab" style="font-weight:500;color:var(--ink-soft)">Backdrop tolerance</span><output id="tolv">15</output></div>
+        <input type="range" id="tol" min="4" max="40" value="15" aria-label="Backdrop tolerance">
+        <p class="note">Removes watermarks and noise on plain studio backgrounds. Turn it off for scenes without one.</p>
+      </div>
+
+      <hr>
+      <div class="dl">
+        <button class="primary" id="dlzip" disabled>Download layered set (.zip)</button>
+        <div class="split">
+          <button id="dlsheet" disabled>Numbered sheet</button>
+          <button id="dlkey" disabled>Color key</button>
+        </div>
+        <p class="note" id="dlnote">The zip holds the layered PSD, the PNGs (including lines over your photo), a hex list and Procreate swatches. Open the PSD, then paint on the "Paint here" layer; lines and numbers stay on top.</p>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Preview">
+      <div class="bar">
+        <div class="tabs" role="tablist" aria-label="Preview">
+          <button role="tab" aria-selected="true" data-tab="sheet">Numbered sheet</button>
+          <button role="tab" aria-selected="false" data-tab="key">Color key</button>
+          <button role="tab" aria-selected="false" data-tab="over">Over photo</button>
+        </div>
+        <div class="tools">
+          <label class="fade" id="fadewrap" hidden>Photo fade <input type="range" id="fade" min="20" max="90" value="60"></label>
+          <button id="zoom" aria-pressed="false">Actual size</button>
+        </div>
+      </div>
+      <div class="viewer" id="viewer">
+        <img id="preview" alt="Underpaint preview">
+        <div class="busy" id="busy" hidden><span id="busytext">Working</span><div class="track"><i id="fill"></i></div></div>
+      </div>
+      <div class="stats" id="stats">&nbsp;</div>
+      <div class="palette" id="palette" aria-label="Palette"></div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script type="text/plain" id="core-src">/*__CORE__*/</script>
+<script src="https://cdn.jsdelivr.net/npm/ag-psd@30.2.0/dist/bundle.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var coreSrc = $("core-src").textContent;
+  var state = { src: null, srcName: "", result: null, canvases: null, tab: "sheet", worker: null, timer: null, urls: {}, run: 0, downloads: undefined };
+
+  // ---------- sample scene (stands in until a photo is chosen) ----------
+  function makeSample() {
+    var c = document.createElement("canvas"); c.width = 900; c.height = 1100;
+    var g = c.getContext("2d");
+    var sky = g.createLinearGradient(0, 0, 0, 720);
+    sky.addColorStop(0, "#1b2a63"); sky.addColorStop(0.5, "#b84b7c"); sky.addColorStop(1, "#f7a65a");
+    g.fillStyle = sky; g.fillRect(0, 0, 900, 1100);
+    var glow = g.createRadialGradient(560, 650, 10, 560, 650, 300);
+    glow.addColorStop(0, "rgba(255,240,170,.95)"); glow.addColorStop(1, "rgba(255,200,120,0)");
+    g.fillStyle = glow; g.fillRect(0, 300, 900, 600);
+    g.fillStyle = "#ffeaa5"; g.beginPath(); g.arc(560, 650, 88, 0, 7); g.fill();
+    g.fillStyle = "rgba(255,225,230,.55)";
+    [[170, 190, 150, 24], [330, 250, 190, 20], [690, 150, 170, 22], [760, 330, 140, 16]].forEach(function (e) {
+      g.beginPath(); g.ellipse(e[0], e[1], e[2], e[3], 0, 0, 7); g.fill();
+    });
+    function ridge(color, pts) {
+      g.fillStyle = color; g.beginPath(); g.moveTo(0, 1100);
+      pts.forEach(function (p) { g.lineTo(p[0], p[1]); });
+      g.lineTo(900, 1100); g.closePath(); g.fill();
+    }
+    ridge("#6a3f78", [[0, 700], [120, 640], [260, 700], [380, 620], [520, 700], [660, 660], [800, 590], [900, 650]]);
+    ridge("#43305f", [[0, 760], [150, 700], [300, 770], [470, 720], [640, 790], [780, 730], [900, 760]]);
+    var lake = g.createLinearGradient(0, 780, 0, 1100);
+    lake.addColorStop(0, "#f0914f"); lake.addColorStop(0.45, "#a2486f"); lake.addColorStop(1, "#262150");
+    g.fillStyle = lake; g.fillRect(0, 790, 900, 310);
+    g.fillStyle = "rgba(255,236,170,.75)";
+    for (var i = 0; i < 9; i++) { g.beginPath(); g.ellipse(560, 830 + i * 26, 90 - i * 7, 5, 0, 0, 7); g.fill(); }
+    ridge("#1a1738", [[0, 980], [90, 930], [200, 990], [260, 1100]]);
+    ridge("#15122d", [[900, 940], [800, 900], [700, 980], [640, 1100]]);
+    g.strokeStyle = "#15122d"; g.lineWidth = 4;
+    for (i = 0; i < 16; i++) { g.beginPath(); g.moveTo(40 + i * 14, 1040); g.quadraticCurveTo(50 + i * 14, 960 - (i % 4) * 24, 70 + i * 13, 930 - (i % 5) * 20); g.stroke(); }
+    var id = g.getImageData(0, 0, 900, 1100), d = id.data, seed = 7;
+    for (i = 0; i < d.length; i += 4) {
+      seed = (seed * 16807) % 2147483647;
+      var n = ((seed / 2147483647) - 0.5) * 14;
+      d[i] += n; d[i + 1] += n; d[i + 2] += n;
+    }
+    g.putImageData(id, 0, 0);
+    return c;
+  }
+
+  // ---------- helpers ----------
+  function toast(msg) {
+    var t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 3600);
+  }
+  function params() {
+    var maxDim = +$("size").value;
+    return {
+      k: +$("k").value,
+      minFont: [16, 12, 9, 7, 5.5][+$("detail").value - 1],
+      smooth: +$("smooth").value,
+      focus: +$("focus").value,
+      flatten: $("flatten").checked,
+      tol: +$("tol").value,
+      lineWidth: Math.max(1, Math.round(maxDim / 1600 * +$("line").value)),
+      maxDim: maxDim
+    };
+  }
+  function schedule() { clearTimeout(state.timer); state.timer = setTimeout(run, 350); }
+
+  // ---------- processing ----------
+  function startWorker(data, w, h, P, onProgress, onDone, onFail) {
+    var worker = null;
+    try {
+      var glue = "\nself.onmessage=function(e){var m=e.data;var r=pbnProcess(new Uint8ClampedArray(m.rgba),m.w,m.h,m.P,function(s,f){self.postMessage({type:'p',s:s,f:f});});self.postMessage({type:'d',r:r},[r.num.buffer,r.edge.buffer]);};";
+      var url = URL.createObjectURL(new Blob([coreSrc + glue], { type: "text/javascript" }));
+      worker = new Worker(url);
+      worker.onmessage = function (e) {
+        if (e.data.type === "p") onProgress(e.data.s, e.data.f); else onDone(e.data.r);
+      };
+      worker.onerror = function () { onFail(); };
+      worker.postMessage({ rgba: data.buffer, w: w, h: h, P: P }, [data.buffer]);
+      return { terminate: function () { worker.terminate(); URL.revokeObjectURL(url); } };
+    } catch (err) {
+      var cancelled = false;
+      setTimeout(function () {
+        if (cancelled) return;
+        try {
+          var fn = new Function(coreSrc + "; return pbnProcess;")();
+          var r = fn(data, w, h, P, onProgress);
+          if (!cancelled) onDone(r);
+        } catch (e2) { onFail(); }
+      }, 30);
+      return { terminate: function () { cancelled = true; } };
+    }
+  }
+
+  function run() {
+    if (!state.src) return;
+    var P = params(), my = ++state.run;
+    var sw = state.src.width, sh = state.src.height;
+    var s = Math.min(2, P.maxDim / Math.max(sw, sh));
+    var w = Math.max(40, Math.round(sw * s)), h = Math.max(40, Math.round(sh * s));
+    var c = document.createElement("canvas"); c.width = w; c.height = h;
+    var g = c.getContext("2d", { willReadFrequently: true });
+    g.imageSmoothingQuality = "high";
+    g.fillStyle = "#fff"; g.fillRect(0, 0, w, h);
+    g.drawImage(state.src, 0, 0, w, h);
+    var img = g.getImageData(0, 0, w, h);
+    P.maxDim = Math.max(w, h);
+    P.lineWidth = Math.max(1, Math.round(P.maxDim / 1600 * +$("line").value));
+    if (state.worker) state.worker.terminate();
+    $("busy").hidden = false; $("busytext").textContent = "Starting"; $("fill").style.width = "2%";
+    ["dlzip", "dlsheet", "dlkey"].forEach(function (id) { $(id).disabled = true; });
+    state.worker = startWorker(img.data, w, h, P,
+      function (s2, f) { if (my !== state.run) return; $("busytext").textContent = s2; $("fill").style.width = Math.round(f * 100) + "%"; },
+      function (r) { if (my !== state.run) return; state.worker = null; finish(r, c); },
+      function () { if (my !== state.run) return; $("busy").hidden = true; toast("Processing failed. Try a smaller output size."); });
+  }
+
+  // ---------- rendering ----------
+  function composeOver() {
+    if (!state.canvases || !state.photo) return;
+    var w = state.result.w, h = state.result.h;
+    var c = state.canvases.over || document.createElement("canvas");
+    c.width = w; c.height = h;
+    var g = c.getContext("2d");
+    g.drawImage(state.photo, 0, 0, w, h);
+    g.fillStyle = "rgba(255,255,255," + (+$("fade").value / 100) + ")";
+    g.fillRect(0, 0, w, h);
+    g.drawImage(state.canvases.lines, 0, 0);
+    state.canvases.over = c;
+  }
+  function finish(r, photo) {
+    var w = r.w, h = r.h, N = w * h, pal = r.palette;
+    function mk() { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+    var key = mk(), kg = key.getContext("2d"), kd = kg.createImageData(w, h);
+    for (var i = 0; i < N; i++) {
+      var c = pal[r.num[i] - 1];
+      kd.data[4 * i] = c[0]; kd.data[4 * i + 1] = c[1]; kd.data[4 * i + 2] = c[2]; kd.data[4 * i + 3] = 255;
+    }
+    kg.putImageData(kd, 0, 0);
+    var lines = mk(), lg = lines.getContext("2d"), ld = lg.createImageData(w, h);
+    for (i = 0; i < N; i++) { ld.data[4 * i] = 34; ld.data[4 * i + 1] = 38; ld.data[4 * i + 2] = 48; ld.data[4 * i + 3] = r.edge[i]; }
+    lg.putImageData(ld, 0, 0);
+    lg.fillStyle = "#222630"; lg.textAlign = "center"; lg.textBaseline = "middle";
+    r.placements.forEach(function (p) {
+      lg.font = "500 " + Math.max(5, p.size).toFixed(1) + 'px "Helvetica Neue", Arial, sans-serif';
+      lg.fillText(String(p.n), p.x, p.y + p.size * 0.04);
+    });
+    var sheet = mk(), sg = sheet.getContext("2d");
+    sg.fillStyle = "#fff"; sg.fillRect(0, 0, w, h); sg.drawImage(lines, 0, 0);
+    state.result = r;
+    state.photo = photo;
+    state.canvases = { sheet: sheet, key: key, lines: lines };
+    composeOver();
+    $("busy").hidden = true;
+    ["dlzip", "dlsheet", "dlkey"].forEach(function (id) { $(id).disabled = !state.downloads; });
+    $("stats").textContent = r.colors + " colors  ·  " + r.regions + " regions  ·  " + w + " × " + h + " px";
+    drawPalette(pal);
+    showTab();
+  }
+  function showTab() {
+    $("fadewrap").hidden = state.tab !== "over";
+    if (!state.canvases) return;
+    var cv = state.canvases[state.tab];
+    cv.toBlob(function (b) {
+      if (!b) return;
+      if (state.urls.preview) URL.revokeObjectURL(state.urls.preview);
+      state.urls.preview = URL.createObjectURL(b);
+      $("preview").src = state.urls.preview;
+    }, "image/png");
+  }
+  function drawPalette(pal) {
+    var box = $("palette"); box.textContent = "";
+    pal.forEach(function (c, i) {
+      var hex = hexOf(c), lum = (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255;
+      var b = document.createElement("button"); b.className = "chip"; b.title = "Copy " + hex;
+      var n = document.createElement("b"); n.textContent = String(i + 1);
+      n.style.background = hex; n.style.color = lum > 0.55 ? "#111" : "#fff";
+      var code = document.createElement("code"); code.textContent = hex;
+      b.appendChild(n); b.appendChild(code);
+      b.addEventListener("click", function () {
+        var done = function () { toast("Copied " + hex); };
+        try { navigator.clipboard.writeText(hex).then(done, function () { toast(hex); }); } catch (e) { toast(hex); }
+      });
+      box.appendChild(b);
+    });
+  }
+  function hexOf(c) { return "#" + c.map(function (v) { return ("0" + v.toString(16)).slice(-2); }).join("").toUpperCase(); }
+
+  // ---------- zip (store only) ----------
+  var crcTable = (function () {
+    var t = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+    return t;
+  })();
+  function crc32(u8) { var c = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) c = crcTable[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function makeZip(files) {
+    var enc = new TextEncoder(), parts = [], central = [], offset = 0;
+    files.forEach(function (f) {
+      var name = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+      var lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+      lh.setUint16(10, 0, true); lh.setUint16(12, 0x21, true); lh.setUint32(14, crc, true);
+      lh.setUint32(18, sz, true); lh.setUint32(22, sz, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+      parts.push(new Uint8Array(lh.buffer), name, f.data);
+      var ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+      ch.setUint16(10, 0, true); ch.setUint16(12, 0, true); ch.setUint16(14, 0x21, true); ch.setUint32(16, crc, true);
+      ch.setUint32(20, sz, true); ch.setUint32(24, sz, true); ch.setUint16(28, name.length, true);
+      ch.setUint32(42, offset, true);
+      central.push(new Uint8Array(ch.buffer), name);
+      offset += 30 + name.length + sz;
+    });
+    var cdSize = 0; central.forEach(function (p) { cdSize += p.length; });
+    var end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), { type: "application/zip" });
+  }
+  function bytesOfCanvas(cv) {
+    return new Promise(function (res) { cv.toBlob(function (b) { b.arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }); }, "image/png"); });
+  }
+  function swatchesBytes(pal) {
+    var list = pal.map(function (c) {
+      var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = 0;
+      if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h /= 6; if (h < 0) h += 1; }
+      return { hue: h, saturation: mx ? d / mx : 0, brightness: mx, alpha: 1, origin: 2, colorSpace: 0, timestamp: 0 };
+    });
+    while (list.length < 30) list.push(null);
+    var json = new TextEncoder().encode(JSON.stringify([{ name: "Underpaint", swatches: list.slice(0, 30) }]));
+    return new Promise(function (res) { makeZip([{ name: "Swatches.json", data: json }]).arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }); });
+  }
+
+  // ---------- downloads ----------
+  function save(name, data) {
+    return state.downloads.save({ filename: name, data: data }).then(function () { toast("Saved " + name); }, function (e) {
+      if (e && e.code === "declined") return;
+      toast("Could not save " + name + (e && e.code ? " (" + e.code + ")" : ""));
+    });
+  }
+  function layerData(cv) { var g = cv.getContext("2d"); return g.getImageData(0, 0, cv.width, cv.height); }
+  async function buildZip() {
+    var r = state.result, cv = state.canvases, w = r.w, h = r.h;
+    var white = new ImageData(w, h); white.data.fill(255);
+    var blank = new ImageData(w, h);
+    var psd = {
+      width: w, height: h,
+      children: [
+        { name: "Color key (hidden)", hidden: true, imageData: layerData(cv.key) },
+        { name: "Paper", imageData: white },
+        { name: "Paint here", imageData: blank },
+        { name: "Lines + numbers", imageData: layerData(cv.lines) }
+      ],
+      imageData: layerData(cv.sheet)
+    };
+    var psdBytes = new Uint8Array(agPsd.writePsd(psd));
+    var enc = new TextEncoder();
+    var hexList = r.palette.map(function (c, i) { return (i + 1) + "  " + hexOf(c); }).join("\n") + "\n";
+    return makeZip([
+      { name: "underpaint.psd", data: psdBytes },
+      { name: "numbered_sheet.png", data: await bytesOfCanvas(cv.sheet) },
+      { name: "lines_and_numbers_transparent.png", data: await bytesOfCanvas(cv.lines) },
+      { name: "lines_over_photo.png", data: await bytesOfCanvas(cv.over) },
+      { name: "color_key.png", data: await bytesOfCanvas(cv.key) },
+      { name: "palette.txt", data: enc.encode(hexList) },
+      { name: "palette.swatches", data: await swatchesBytes(r.palette) }
+    ]);
+  }
+  function stem() { return (state.srcName || "sample").replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_").slice(0, 40) || "photo"; }
+
+  $("dlzip").addEventListener("click", async function () {
+    if (!state.result || !state.downloads) return;
+    var btn = this; btn.disabled = true; var old = btn.textContent; btn.textContent = "Building files";
+    try { await save(stem() + "_underpaint.zip", await buildZip()); }
+    catch (e) { toast("Could not build the layered file."); }
+    btn.textContent = old; btn.disabled = false;
+  });
+  $("dlsheet").addEventListener("click", function () {
+    if (!state.canvases || !state.downloads) return;
+    state.canvases.sheet.toBlob(function (b) { save(stem() + "_numbered_sheet.png", b); }, "image/png");
+  });
+  $("dlkey").addEventListener("click", function () {
+    if (!state.canvases || !state.downloads) return;
+    state.canvases.key.toBlob(function (b) { save(stem() + "_color_key.png", b); }, "image/png");
+  });
+
+  // ---------- inputs ----------
+  function loadFile(file) {
+    if (!file || !/^image\//.test(file.type)) { toast("Choose an image file (JPG, PNG, WebP)."); return; }
+    var done = function (src) { state.src = src; state.srcName = file.name; $("srcname").textContent = file.name + ". Drop another to replace it."; run(); };
+    if (window.createImageBitmap) {
+      createImageBitmap(file).then(done, function () { toast("That image could not be read."); });
+    } else {
+      var u = URL.createObjectURL(file), im = new Image();
+      im.onload = function () { done(im); URL.revokeObjectURL(u); };
+      im.onerror = function () { toast("That image could not be read."); };
+      im.src = u;
+    }
+  }
+  var drop = $("drop");
+  drop.addEventListener("click", function () { $("file").click(); });
+  drop.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } });
+  $("file").addEventListener("change", function () { loadFile(this.files[0]); this.value = ""; });
+  ["dragenter", "dragover"].forEach(function (t) { document.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (t) { document.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+  document.addEventListener("drop", function (e) { var f = e.dataTransfer && e.dataTransfer.files[0]; if (f) loadFile(f); });
+
+  var PRESETS = {
+    balanced: { k: 24, detail: 3, smooth: 2, focus: 1, size: "1600", flatten: true },
+    easy: { k: 12, detail: 1, smooth: 3, focus: 0, size: "1600" },
+    portrait: { k: 32, detail: 4, smooth: 2, focus: 2, size: "2400", flatten: true },
+    scene: { k: 48, detail: 5, smooth: 1, focus: 3, size: "2400", flatten: false }
+  };
+  function setValue(id, v) {
+    var el = $(id); el.value = v;
+    var out = { k: "kv", detail: "detailv", smooth: "smoothv", focus: "focusv", tol: "tolv" }[id];
+    if (out) $(out).textContent = v;
+  }
+  function applyPreset(name) {
+    var p = PRESETS[name]; if (!p) return;
+    ["k", "detail", "smooth", "focus"].forEach(function (id) { setValue(id, p[id]); });
+    $("size").value = p.size;
+    if (typeof p.flatten === "boolean") { $("flatten").checked = p.flatten; $("tol").disabled = !p.flatten; }
+    schedule();
+  }
+  $("preset").addEventListener("change", function () { applyPreset(this.value); });
+  function markCustom() { $("preset").value = "custom"; }
+  [["k", "kv"], ["detail", "detailv"], ["smooth", "smoothv"], ["focus", "focusv"], ["tol", "tolv"]].forEach(function (p) {
+    var el = $(p[0]);
+    el.addEventListener("input", function () { $(p[1]).textContent = el.value; });
+    el.addEventListener("change", function () { markCustom(); schedule(); });
+  });
+  ["size", "line"].forEach(function (id) { $(id).addEventListener("change", function () { markCustom(); schedule(); }); });
+  $("flatten").addEventListener("change", function () { $("tol").disabled = !this.checked; markCustom(); schedule(); });
+
+  document.querySelectorAll(".tabs button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.tab = b.getAttribute("data-tab");
+      document.querySelectorAll(".tabs button").forEach(function (o) { o.setAttribute("aria-selected", o === b ? "true" : "false"); });
+      showTab();
+    });
+  });
+  var fadeFrame = 0;
+  $("fade").addEventListener("input", function () {
+    cancelAnimationFrame(fadeFrame);
+    fadeFrame = requestAnimationFrame(function () { composeOver(); showTab(); });
+  });
+  $("zoom").addEventListener("click", function () {
+    var on = $("viewer").classList.toggle("actual");
+    this.setAttribute("aria-pressed", on ? "true" : "false");
+    this.textContent = on ? "Fit to window" : "Actual size";
+  });
+
+  // ---------- downloads capability (lights up when available) ----------
+  try {
+    if (window.claude && window.claude.use) {
+      window.claude.use("downloads").then(function (d) {
+        state.downloads = d || null;
+        if (d) { if (state.result) ["dlzip", "dlsheet", "dlkey"].forEach(function (id) { $(id).disabled = false; }); }
+        else $("dlnote").textContent = "Saving files works when this page is open in Claude. Until then, right-click or long-press the preview to save the image.";
+      }, function () { state.downloads = null; });
+    } else {
+      state.downloads = null;
+      $("dlnote").textContent = "Saving files works when this page is open in Claude. Until then, right-click or long-press the preview to save the image.";
+    }
+  } catch (e) { state.downloads = null; }
+
+  // ---------- start with the sample so the first view shows the result ----------
+  state.src = makeSample(); state.srcName = "sample";
+  run();
+})();
+</script>
