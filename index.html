@@ -283,7 +283,7 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
       <li><b>Add a photo.</b> Drop one on the box at the top left, or click it to choose a file (JPG, PNG or WebP). Until then you are looking at a sample scene.</li>
       <li><b>Pick a preset</b> and look at the preview. Adjust any slider to fine-tune; the preview updates by itself a moment after you stop moving it.</li>
       <li><b>Download the layered set (.zip)</b>, unzip it, and open <code>underpaint.psd</code> in Procreate or Fresco.</li>
-      <li><b>Paint on the layer named "Paint here."</b> The lines and numbers sit on a separate layer above it, so your color never covers them.</li>
+      <li><b>Paint on the layer named "Paint here."</b> The outlines and numbers sit on separate layers above it, so your color never covers them.</li>
     </ol>
 
     <h3>Presets</h3>
@@ -317,9 +317,10 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
 
     <h3>What is in the zip</h3>
     <table class="tbl">
-      <tr><th><code>underpaint.psd</code></th><td>The layered file for Procreate or Fresco. Layers from top to bottom: <b>Lines + numbers</b>, <b>Paint here</b> (empty), <b>Paper</b>, and two hidden reference layers: <b>Color key + numbers</b> and a plain <b>Color key</b>. Turn one on to see the intended colors.</td></tr>
+      <tr><th><code>underpaint.psd</code></th><td>The layered file for Procreate or Fresco. Layers from top to bottom: <b>Numbers</b>, <b>Outlines (set as Reference)</b>, <b>Paint here</b> (empty), <b>Paper</b>, and two hidden reference layers: <b>Color key + numbers</b> and a plain <b>Color key</b>. Turn one on to see the intended colors.</td></tr>
       <tr><th><code>numbered_sheet.png</code></th><td>The numbered page as a flat image, for printing.</td></tr>
       <tr><th><code>lines_and_numbers_transparent.png</code></th><td>Just the outlines and numbers on a transparent background, to place over any canvas.</td></tr>
+      <tr><th><code>outlines_only_transparent.png</code></th><td>The outlines without numbers, on a transparent background.</td></tr>
       <tr><th><code>lines_over_photo.png</code></th><td>Lines and numbers over your faded photo.</td></tr>
       <tr><th><code>color_key.png</code></th><td>The flat-color version, for reference.</td></tr>
       <tr><th><code>color_key_numbered.png</code></th><td>The flat-color version with each region's number on it.</td></tr>
@@ -331,11 +332,12 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
     <h3>Painting in Procreate or Fresco</h3>
     <ul>
       <li><b>Open the PSD.</b> In Procreate, use Import in the Gallery and choose <code>underpaint.psd</code>. In Fresco, open it from your device&rsquo;s files. Layers are kept.</li>
-      <li><b>Paint on "Paint here."</b> Keep the lines layer above it. To fill whole regions quickly, use a fill tool that can look at another layer. In Procreate, set the Lines layer as the Reference layer so a color drop fills right up to the outlines.</li>
+      <li><b>Fill with the bucket.</b> Select the <b>Paint here</b> layer and fill regions with your fill tool, using the <b>Outlines (set as Reference)</b> layer as the reference so fills stop at the lines and land on "Paint here." In Procreate, open that layer's menu and choose Reference, then drag a color into a region (Color Drop) and use Continue filling for the next. The numbers are on their own layer, so they do not leave holes in your fills. In Fresco, use the Fill tool and look for its option to read other layers. If color leaks past a line, raise the fill threshold slightly or regenerate with a bolder Line weight.</li>
+      <li><b>Paint by hand.</b> Everything stays on "Paint here," so you can erase and repaint freely without touching the lines.</li>
       <li><b>Match colors to numbers.</b> A Procreate palette shows colors without numbers, so keep <code>legend.png</code> in view: in Procreate, open the Canvas settings, choose Reference, and import the image. It floats over your canvas and shows which number is which color. In Fresco, keep the legend open in another window or on a second device.</li>
       <li><b>Or pick by number from the canvas.</b> Turn on the <b>Color key + numbers</b> layer, find a region's number, then use the eyedropper on a spot next to the number to pick up its color. Turn the layer off again before painting.</li>
       <li><b>Load your palette.</b> Procreate can import the <code>.swatches</code> files (tap a file in the Files app and choose to open it in Procreate). Swatches are in number order: the first swatch is number 1. A palette with more than 30 colors comes as several files; import each one. <b>These files have only been tested to import, not for every Procreate version</b>; if one does not, type the hex codes from <code>palette.txt</code>.</li>
-      <li><b>Hide the numbers when you finish</b> by turning off the Lines layer. Or keep the lines as a stylistic choice.</li>
+      <li><b>Hide the numbers when you finish</b> by turning off the Numbers layer. Keep the outlines if you like the line look, or hide those too.</li>
       <li><b>As a base, not a rule.</b> The regions are a starting point. Blend, repaint and add detail on top; the image does not have to look like a paint-by-number.</li>
     </ul>
 
@@ -24258,14 +24260,18 @@ module.exports = function whichTypedArray(value) {
       kd.data[4 * i] = c[0]; kd.data[4 * i + 1] = c[1]; kd.data[4 * i + 2] = c[2]; kd.data[4 * i + 3] = 255;
     }
     kg.putImageData(kd, 0, 0);
-    var lines = mk(), lg = lines.getContext("2d"), ld = lg.createImageData(w, h);
+    // outlines and numbers are kept apart so outlines alone can serve as a fill reference
+    var outlines = mk(), og = outlines.getContext("2d"), ld = og.createImageData(w, h);
     for (i = 0; i < N; i++) { ld.data[4 * i] = 34; ld.data[4 * i + 1] = 38; ld.data[4 * i + 2] = 48; ld.data[4 * i + 3] = r.edge[i]; }
-    lg.putImageData(ld, 0, 0);
-    lg.fillStyle = "#222630"; lg.textAlign = "center"; lg.textBaseline = "middle";
+    og.putImageData(ld, 0, 0);
+    var numbers = mk(), mg = numbers.getContext("2d");
+    mg.fillStyle = "#222630"; mg.textAlign = "center"; mg.textBaseline = "middle";
     r.placements.forEach(function (p) {
-      lg.font = "500 " + Math.max(5, p.size).toFixed(1) + 'px "Helvetica Neue", Arial, sans-serif';
-      lg.fillText(String(p.n), p.x, p.y + p.size * 0.04);
+      mg.font = "500 " + Math.max(5, p.size).toFixed(1) + 'px "Helvetica Neue", Arial, sans-serif';
+      mg.fillText(String(p.n), p.x, p.y + p.size * 0.04);
     });
+    var lines = mk(), lg = lines.getContext("2d");
+    lg.drawImage(outlines, 0, 0); lg.drawImage(numbers, 0, 0);
     var sheet = mk(), sg = sheet.getContext("2d");
     sg.fillStyle = "#fff"; sg.fillRect(0, 0, w, h); sg.drawImage(lines, 0, 0);
     var keyNum = mk(), ng = keyNum.getContext("2d");
@@ -24277,7 +24283,7 @@ module.exports = function whichTypedArray(value) {
     });
     state.result = r;
     state.photo = photo;
-    state.canvases = { sheet: sheet, key: key, keyNum: keyNum, lines: lines, legend: makeLegend(pal) };
+    state.canvases = { sheet: sheet, key: key, keyNum: keyNum, lines: lines, outlines: outlines, numbers: numbers, legend: makeLegend(pal) };
     composeOver();
     $("busy").hidden = true;
     ["dlzip", "dlsheet", "dlkey"].forEach(function (id) { $(id).disabled = !state.downloads; });
@@ -24420,7 +24426,8 @@ module.exports = function whichTypedArray(value) {
         { name: "Color key + numbers (hidden)", hidden: true, imageData: layerData(cv.keyNum) },
         { name: "Paper", imageData: white },
         { name: "Paint here", imageData: blank },
-        { name: "Lines + numbers", imageData: layerData(cv.lines) }
+        { name: "Outlines (set as Reference)", imageData: layerData(cv.outlines) },
+        { name: "Numbers", imageData: layerData(cv.numbers) }
       ],
       imageData: layerData(cv.sheet)
     };
@@ -24431,6 +24438,7 @@ module.exports = function whichTypedArray(value) {
       { name: "underpaint.psd", data: psdBytes },
       { name: "numbered_sheet.png", data: await bytesOfCanvas(cv.sheet) },
       { name: "lines_and_numbers_transparent.png", data: await bytesOfCanvas(cv.lines) },
+      { name: "outlines_only_transparent.png", data: await bytesOfCanvas(cv.outlines) },
       { name: "lines_over_photo.png", data: await bytesOfCanvas(cv.over) },
       { name: "color_key.png", data: await bytesOfCanvas(cv.key) },
       { name: "color_key_numbered.png", data: await bytesOfCanvas(cv.keyNum) },

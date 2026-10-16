@@ -8,7 +8,7 @@ Live site: https://underpaint.netlify.app/
 
 Click **Help** in the top right of the app for a built-in guide: quick start, what every control does, what is in the downloaded zip, painting tips for Procreate and Fresco, and troubleshooting. The help text lives in the `<dialog id="help">` block of `src/template.html`; edit it there and rebuild.
 
-Notes: Procreate palettes hold 30 colors, so the zip contains one `palette_<from>-<to>.swatches` file per 30 colors, in number order. `legend.png` shows every number next to its color, for use in Procreate's Reference window. The PSD layers are, top to bottom: Lines + numbers, Paint here, Paper, and two hidden reference layers (Color key + numbers, Color key).
+Notes: Procreate palettes hold 30 colors, so the zip contains one `palette_<from>-<to>.swatches` file per 30 colors, in number order. `legend.png` shows every number next to its color, for use in Procreate's Reference window. The PSD layers are, top to bottom: Numbers, Outlines (set as Reference), Paint here, Paper, and two hidden reference layers (Color key + numbers, Color key). Outlines and numbers are separate so the outlines can be used as the fill-reference layer for a bucket fill without the digits leaving holes.
 
 ## Layout
 

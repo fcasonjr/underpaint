@@ -1,6 +1,6 @@
 # Underpaint: project notes
 
-Last updated: 2026-10-14 (legend, numbered color key, split swatches added)
+Last updated: 2026-10-16 (legend, numbered color key, split swatches, outlines/numbers split for bucket fill)
 
 ## What it is
 
@@ -51,7 +51,7 @@ Preset (Balanced, Easy to paint, Portrait, Detailed scene, Custom), Colors (6 to
 
 ## What is in the downloaded zip
 
-`underpaint.psd` (layers top to bottom: Lines + numbers, Paint here, Paper, hidden Color key + numbers, hidden Color key), `numbered_sheet.png`, `lines_and_numbers_transparent.png`, `lines_over_photo.png`, `color_key.png`, `color_key_numbered.png`, `legend.png` (numbered chips in swatch order, for Procreate's Reference window), `palette.txt`, and one `palette_<from>-<to>.swatches` per 30 colors.
+`underpaint.psd` (layers top to bottom: Numbers, Outlines (set as Reference), Paint here, Paper, hidden Color key + numbers, hidden Color key), `numbered_sheet.png`, `lines_and_numbers_transparent.png`, `outlines_only_transparent.png`, `lines_over_photo.png`, `color_key.png`, `color_key_numbered.png`, `legend.png` (numbered chips in swatch order, for Procreate's Reference window), `palette.txt`, and one `palette_<from>-<to>.swatches` per 30 colors.
 
 ## Known gaps and things not yet tested
 
@@ -60,6 +60,8 @@ Preset (Balanced, Easy to paint, Portrait, Detailed scene, Custom), Colors (6 to
 - The Procreate and Fresco painting tips in the Help panel are from general knowledge of the apps, not from testing.
 - Very large photos on phones may run out of memory; the Help panel suggests a smaller output size.
 - The page loads fonts from Google Fonts, so offline it falls back to system fonts.
+
+- Bucket-fill workflow (Color Drop in Procreate with the Outlines layer as Reference; Fill tool in Fresco) is described in the Help panel but untested in the apps. Fresco's exact option names are unverified.
 
 ## Possible next steps
 
