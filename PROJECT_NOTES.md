@@ -1,6 +1,6 @@
 # Underpaint: project notes
 
-Last updated: 2026-10-16 (legend, numbered color key, split swatches, outlines/numbers split for bucket fill)
+Last updated: 2026-10-21 (grayscale option added) (legend, numbered color key, split swatches, outlines/numbers split for bucket fill)
 
 ## What it is
 
@@ -47,7 +47,7 @@ Processing runs in a Web Worker so the page stays responsive.
 
 ## Controls
 
-Preset (Balanced, Easy to paint, Portrait, Detailed scene, Custom), Colors (6 to 64), Region size (1 to 5), Smoothing (0 to 3), Detail focus (0 to 3), Output size (1000 / 1600 / 2400), Line weight, Flatten backdrop with tolerance. The Help button in the app explains each one.
+Preset (Balanced, Easy to paint, Portrait, Detailed scene, Custom), Grayscale (values only; converts the photo to gray before processing, independent of presets), Colors (4 to 64), Region size (1 to 5), Smoothing (0 to 3), Detail focus (0 to 3), Output size (1000 / 1600 / 2400), Line weight, Flatten backdrop with tolerance. The Help button in the app explains each one.
 
 ## What is in the downloaded zip
 

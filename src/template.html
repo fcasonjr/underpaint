@@ -177,8 +177,13 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
       </div>
 
       <div class="field">
+        <label class="check"><input type="checkbox" id="gray"> Grayscale (values only)</label>
+        <p class="note">Reduces the photo to shades of gray, so the palette becomes steps from dark to light. Good for a values underpainting you glaze color over later.</p>
+      </div>
+
+      <div class="field">
         <div class="row"><label for="k">Colors</label><output id="kv">24</output></div>
-        <input type="range" id="k" min="6" max="64" value="24">
+        <input type="range" id="k" min="4" max="64" value="24">
         <div class="hint"><span>Easier</span><span>More realistic</span></div>
       </div>
 
@@ -287,7 +292,8 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
 
     <h3>What each control does</h3>
     <dl>
-      <div><dt>Colors (6 to 64)</dt><dd>How many paint colors the photo is reduced to. Fewer is easier and more graphic; more is more realistic and more work.</dd></div>
+      <div><dt>Grayscale (values only)</dt><dd>Converts the photo to shades of gray before processing, so every palette color is a gray, numbered from darkest to lightest. Use it for a values underpainting: block in the light and dark shapes first, then glaze color on top. Fewer colors (6 to 10) usually reads best. It works with every preset and does not change the other settings.</dd></div>
+      <div><dt>Colors (4 to 64)</dt><dd>How many paint colors the photo is reduced to. Fewer is easier and more graphic; more is more realistic and more work.</dd></div>
       <div><dt>Region size (1 to 5)</dt><dd>The smallest shape that gets its own number. Low values merge small shapes into their neighbors for big, simple areas. High values keep fine detail, with smaller numbers.</dd></div>
       <div><dt>Smoothing (0 to 3)</dt><dd>Calms noisy edges and speckle. Higher gives cleaner, rounder shapes; 0 keeps every wobble of the photo, which is best for textured subjects.</dd></div>
       <div><dt>Detail focus (0 to 3)</dt><dd>Spends more of your colors on busy areas such as stone, leaves and faces instead of large smooth skies. Raise it when a photo loses detail you care about.</dd></div>
@@ -337,6 +343,7 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
       <li>If a face or key object turns blobby, raise <b>Detail focus</b> and <b>Region size</b>, and lower <b>Smoothing</b>.</li>
       <li>If there are too many tiny numbers to paint, lower <b>Region size</b> or <b>Colors</b>, or raise <b>Smoothing</b>.</li>
       <li>For a very small output (1000 px), numbers in tiny regions may be hard to read. Use 1600 or 2400 for detailed photos.</li>
+      <li>For a values study, tick <b>Grayscale</b> and try 6 to 10 colors. In Procreate, put a layer set to a color blend mode (such as Color) above your gray painting to add color afterward.</li>
       <li>Crop the photo to your subject first. The tool works on the whole image, so a tight crop spends your colors where they matter.</li>
     </ul>
 
@@ -414,6 +421,7 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
       smooth: +$("smooth").value,
       focus: +$("focus").value,
       flatten: $("flatten").checked,
+      gray: $("gray").checked,
       tol: +$("tol").value,
       lineWidth: Math.max(1, Math.round(maxDim / 1600 * +$("line").value)),
       maxDim: maxDim
@@ -460,6 +468,11 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
     g.fillStyle = "#fff"; g.fillRect(0, 0, w, h);
     g.drawImage(state.src, 0, 0, w, h);
     var img = g.getImageData(0, 0, w, h);
+    if (P.gray) {
+      var d = img.data;
+      for (var q = 0; q < d.length; q += 4) { var y = (0.299 * d[q] + 0.587 * d[q + 1] + 0.114 * d[q + 2] + 0.5) | 0; d[q] = d[q + 1] = d[q + 2] = y; }
+      g.putImageData(img, 0, 0);
+    }
     P.maxDim = Math.max(w, h);
     P.lineWidth = Math.max(1, Math.round(P.maxDim / 1600 * +$("line").value));
     if (state.worker) state.worker.terminate();
@@ -744,6 +757,7 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
     el.addEventListener("change", function () { markCustom(); schedule(); });
   });
   ["size", "line"].forEach(function (id) { $(id).addEventListener("change", function () { markCustom(); schedule(); }); });
+  $("gray").addEventListener("change", schedule);
   $("flatten").addEventListener("change", function () { $("tol").disabled = !this.checked; markCustom(); schedule(); });
 
   document.querySelectorAll(".tabs button").forEach(function (b) {
