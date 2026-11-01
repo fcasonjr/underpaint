@@ -338,9 +338,165 @@ var PICTURES = [
 `}
 ];
 
+/* ------------------------------------------------------------------ PAINTERLY (harder)
+   Impressionist-style scenes built from hundreds of short brush dabs. Each scene is a function that says what color
+   (hue, saturation, lightness, brush angle) belongs at a point; dabs are scattered over the canvas in a fixed pseudo-random
+   order, so every picture draws identically every time. Original compositions. */
+PICTURE_CATS.push({ id: "painterly", label: "Painterly (harder)" });
+function pbRng(seed) { return function () { seed = (seed + 0x6D2B79F5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function pbHex(h, s, l) {
+  h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(100, s)) / 100; l = Math.max(0, Math.min(100, l)) / 100;
+  var a = s * Math.min(l, 1 - l);
+  function f(n) { var k = (n + h / 30) % 12, c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); return ("0" + Math.round(c * 255).toString(16)).slice(-2); }
+  return "#" + f(0) + f(8) + f(4);
+}
+function pbDabs(seed, scene) {
+  var R = pbRng(seed), out = [];
+  function pass(step, len, wid, jit) {
+    for (var y = -step; y < 600 + step; y += step) for (var x = -step; x < 800 + step; x += step) {
+      var cx = x + (R() - 0.5) * step * 1.1, cy = y + (R() - 0.5) * step * 1.1;
+      var c = scene(Math.max(0, Math.min(799, cx)), Math.max(0, Math.min(599, cy)), R); if (!c) continue;
+      var h = c[0] + (R() - 0.5) * jit * 1.2, sat = c[1] + (R() - 0.5) * jit * 1.6, l = c[2] + (R() - 0.5) * jit * 1.8;
+      var ang = (c[3] || 0) + (R() - 0.5) * 40, rx = len * (0.7 + R() * 0.6), ry = wid * (0.7 + R() * 0.6);
+      out.push('<ellipse cx="' + cx.toFixed(0) + '" cy="' + cy.toFixed(0) + '" rx="' + rx.toFixed(0) + '" ry="' + ry.toFixed(0) +
+        '" fill="' + pbHex(h, sat, l) + '" transform="rotate(' + ang.toFixed(0) + ' ' + cx.toFixed(0) + ' ' + cy.toFixed(0) + ')"/>');
+    }
+  }
+  pass(14, 17, 11, 4);   // underpainting, big soft dabs
+  pass(11, 11, 5.5, 8);  // brushwork
+  pass(17, 8, 4, 12);    // touches of broken color
+  return out.join("");
+}
+function pbIn(x, y, cx, cy, rx, ry) { var dx = (x - cx) / rx, dy = (y - cy) / ry; return dx * dx + dy * dy <= 1; }
+function pbMix(a, b, t) { t = Math.max(0, Math.min(1, t)); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+
+function scenePoppy() {
+  var R = pbRng(11), poppies = [], i;
+  for (i = 0; i < 240; i++) { var py = 270 + Math.pow(R(), 0.8) * 330; poppies.push([R() * 800, py, 3 + (py - 250) / 40 + R() * 3]); }
+  var clouds = [[170, 80, 120, 30], [260, 62, 70, 24], [560, 120, 140, 28], [650, 100, 80, 22], [380, 150, 90, 18]];
+  return function (x, y, r) {
+    var k;
+    if (y < 258 + 14 * Math.sin(x / 41) + 7 * Math.sin(x / 13)) {
+      if (y > 232 + 14 * Math.sin(x / 41)) return [140, 30, 32 + 8 * r(), 80];
+      for (k = 0; k < clouds.length; k++) if (pbIn(x, y, clouds[k][0], clouds[k][1], clouds[k][2], clouds[k][3])) return [30, 40, 94, 0];
+      return pbMix([212, 62, 62], [200, 55, 84], y / 240).concat(0);
+    }
+    if (pbIn(x, y, 140, 190, 125, 100) && y < 330) return [118 + 20 * r(), 45, 24 + 14 * r(), 70];
+    if (x > 126 && x < 152 && y >= 280 && y < 400) return [25, 35, 24, 90];
+    var pathx = 520 + 60 * Math.sin((y - 260) / 55) - (y - 260) * 0.25, w = 10 + (y - 260) * 0.2;
+    if (Math.abs(x - pathx) < w) return [38, 50, 66 + 8 * r(), 0];
+    for (k = 0; k < poppies.length; k++) { var p = poppies[k]; if ((x - p[0]) * (x - p[0]) + (y - p[1]) * (y - p[1]) < p[2] * p[2] * 1.4) return [4 + 6 * r(), 80, 46 + 8 * r(), 0]; }
+    return pbMix([100, 40, 38], [88, 50, 50], (y - 260) / 340).concat(75);
+  };
+}
+function sceneLilyPond() {
+  var R = pbRng(23), pads = [], i;
+  for (i = 0; i < 38; i++) { var py = 330 + R() * 250; pads.push([R() * 800, py, 20 + (py - 320) / 5 * (0.6 + R() * 0.6), 6 + (py - 320) / 20 * (0.6 + R() * 0.5), R() < 0.28]); }
+  return function (x, y, r) {
+    var k;
+    var bridge = y < 392 && pbIn(x, y, 400, 392, 340, 150) && !pbIn(x, y, 400, 392, 306, 118);
+    if (bridge) return [28, 38, 52 + 12 * r(), 0];
+    if (y < 262 && !(y > 200 && Math.abs(x - 400) < 330)) return [128 + 25 * r(), 42, 20 + 14 * r(), 90 + 10 * r()];
+    if (y < 262) return [140 + 30 * r(), 35, 30 + 12 * r(), 80];
+    for (k = 0; k < pads.length; k++) { var p = pads[k];
+      if (pbIn(x, y, p[0], p[1], p[2], p[3])) return [110 + 20 * r(), 48, 34 + 10 * r(), 0];
+      if (p[4] && pbIn(x, y, p[0] + 5, p[1] - 4, p[2] * 0.3, p[3] * 0.7)) return [335 + 10 * r(), 70, 74 + 8 * r(), 0]; }
+    var t = (y - 262) / 338;
+    return [200 + 40 * Math.sin(x / 90 + y / 35) * 0.5 + 20 * r(), 40 + 10 * r(), 30 + 22 * (1 - t) * (0.5 + 0.5 * Math.sin(x / 70)), 0];
+  };
+}
+function sceneHarbor() {
+  return function (x, y, r) {
+    var hz = 300;
+    var sun = Math.hypot(x - 450, y - 232);
+    if (y < hz) {
+      if (sun < 42) return [48, 95, 78, 0];
+      if (sun < 95) return [40, 90, 72 + (95 - sun) / 8, 0];
+      // far ships in haze
+      if (y > 260 && ((x > 80 && x < 190 && y < hz - 8 - (x - 80) * 0.0) || false)) return [220, 18, 62, 0];
+      return pbMix([265, 35, 58], [384, 90, 76], Math.pow(y / hz, 1.4)).concat(0);
+    }
+    // sailboats
+    function hull(cx, cy, w, s) { return y > cy && y < cy + 16 * s && Math.abs(x - cx) < w * (1 - (y - cy) / (28 * s)); }
+    function sail(cx, cy, s) { return y > cy - 110 * s && y < cy && x > cx - 4 * s && x < cx + 4 * s + (y - (cy - 110 * s)) * 0.45 * (cx > 400 ? -1 : 1) * 0 + (cy - y) * 0 + 50 * s * ((y - (cy - 110 * s)) / (110 * s)); }
+    if (hull(180, 440, 80, 1.3) || hull(620, 400, 55, 0.9)) return [222, 40, 20 + 6 * r(), 0];
+    if (sail(190, 440, 1.3)) return [40, 40, 90 - 6 * r(), 80];
+    if (sail(625, 400, 0.9)) return [14, 60, 66, 80];
+    if (hull(180, 462, 80, 1.3) && y > 466) return [222, 30, 18, 0];
+    var streak = Math.abs(x - 450) < 30 + (y - hz) * 0.1 && r() < 0.8;
+    if (streak) return [40, 92, 66 + 14 * r(), 90];
+    var t = (y - hz) / 300;
+    return pbMix([225, 45, 52], [235, 45, 28], t).concat(0).map(function (v, i) { return i === 2 ? v + 8 * Math.sin(x / 35 + y / 9) : v; });
+  };
+}
+function sceneAutumn() {
+  return function (x, y, r) {
+    var vx = 400, hz = 330;
+    if (y < hz) {
+      var leftT = pbIn(x, y, 130, 170, 210, 190) || pbIn(x, y, 90, 330, 160, 90) || pbIn(x, y, 250, 70, 140, 70);
+      var rightT = pbIn(x, y, 690, 160, 200, 180) || pbIn(x, y, 740, 320, 150, 80) || pbIn(x, y, 560, 70, 140, 70);
+      if (leftT || rightT) { var c = r(); return [c < 0.35 ? 8 + 8 * r() : c < 0.75 ? 28 + 12 * r() : 48 + 8 * r(), 80, 46 + 14 * r(), 80 + 20 * r()]; }
+      if (Math.abs(x - 300) < 14 && y > 240 || Math.abs(x - 520) < 12 && y > 250) return [20, 30, 24, 90];
+      return pbMix([200, 50, 78], [40, 60, 88], y / hz).concat(0);
+    }
+    var half = (y - hz) * 1.25 + 8;
+    if (Math.abs(x - vx) < half) {
+      var stripe = Math.sin((y - hz) / 12 + x / 200) > 0.75;
+      return stripe ? [250, 25, 48, 0] : [34, 52, 60 + 14 * r(), 0];
+    }
+    if (r() < 0.12) return [32 + 10 * r(), 85, 52, 0];
+    return pbMix([75, 48, 42], [50, 60, 46], (y - hz) / 270).concat(10);
+  };
+}
+function sceneVillage() {
+  var houses = [[90, 300, 130, 100, 0], [270, 330, 110, 90, 1], [450, 310, 140, 110, 2], [650, 340, 120, 100, 0]];
+  return function (x, y, r) {
+    var k, hz = 340;
+    for (k = 0; k < houses.length; k++) { var H = houses[k], hx = H[0], hy = H[1], hw = H[2], hh = H[3];
+      if (x > hx && x < hx + hw && y > hy && y < hy + hh) {
+        var win = ((x - hx) % 40 > 12 && (x - hx) % 40 < 28 && (y - hy) > 30 && (y - hy) < 60) || (x > hx + hw / 2 - 10 && x < hx + hw / 2 + 10 && y > hy + hh - 38);
+        return win ? [44, 92, 62 + 8 * r(), 0] : [[14, 40, 34], [200, 25, 42], [28, 45, 40]][H[4]].concat(0);
+      }
+      if (x > hx - 8 && x < hx + hw + 8 && y > hy - 44 && y <= hy && (y - (hy - 44)) > Math.abs(x - (hx + hw / 2)) * 44 / (hw / 2 + 8) * 1.0) return [220, 20, 90, 90];
+    }
+    if (Math.abs(x - 40) < 40 * (y - 190) / 190 && y > 190 && y < 380 || Math.abs(x - 760) < 44 * (y - 160) / 200 && y > 160 && y < 400) return [150, 40, 18 + 8 * r(), 90];
+    if (y < hz) return pbMix([232, 42, 40], [376, 75, 74], Math.pow(y / hz, 2)).concat(0);
+    var sh = Math.sin(x / 60) * 0.5 + (y - hz) / 260;
+    return [215 + 15 * r(), 28 + 20 * (sh > 0.5 ? 1 : 0), 88 - 10 * (sh > 0.5 ? 1 : 0) - 5 * r(), 0];
+  };
+}
+function sceneHaystacks() {
+  var stacks = [[230, 440, 110, 125], [520, 455, 90, 100]];
+  return function (x, y, r) {
+    var k, hz = 300;
+    for (k = 0; k < stacks.length; k++) { var S = stacks[k];
+      if (y < S[1] && pbIn(x, y, S[0], S[1], S[2], S[3])) return pbMix([40, 62, 62], [18, 50, 34], (x - (S[0] - S[2])) / (S[2] * 2)).concat(80 + 20 * r());
+      if (y >= S[1] && y < S[1] + 22 && Math.abs(x - S[0]) < S[2] + 6) return [20, 40, 28, 0];
+      if (y >= S[1] - 6 && y < S[1] + 40 && x > S[0] + S[2] - 10 && pbIn(x, y, S[0] + S[2] + 90, S[1] + 14, 120, 16)) return [262, 32, 38, 0];
+    }
+    if (y < hz) {
+      var sun = Math.hypot(x - 640, y - 270);
+      if (sun < 34) return [48, 100, 88, 0];
+      return pbMix([268, 38, 70], [382, 82, 82], Math.pow(y / hz, 1.6)).concat(0);
+    }
+    if (y < hz + 18) return [200, 25, 52, 0];
+    return pbMix([48, 62, 62], [40, 55, 46], (y - hz) / 300).concat(0).map(function (v, i) { return i === 2 ? v + 5 * Math.sin(x / 30) : v; });
+  };
+}
+(function () {
+  var defs = [
+    ["poppies", "Poppy Field", 101, scenePoppy], ["lily-pond", "Lily Pond", 102, sceneLilyPond], ["harbor", "Harbor at Sunrise", 103, sceneHarbor],
+    ["autumn", "Autumn Lane", 104, sceneAutumn], ["village", "Snowy Village", 105, sceneVillage], ["haystacks", "Haystacks at Dusk", 106, sceneHaystacks]
+  ];
+  defs.forEach(function (d) {
+    PICTURES.push({ id: d[0], cat: "painterly", title: d[1], k: 32, detail: 2, smooth: 2, gen: function () { return pbDabs(d[2], d[3]()); } });
+  });
+})();
+function pictureSvg(p) { if (p.svg == null) p.svg = p.gen(); return p.svg; }
+
 /* Draw a picture into a canvas (1200 x 900) and hand it back. */
 function renderPicture(p, done) {
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="1200" height="900">' + p.svg + '</svg>';
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="1200" height="900">' + pictureSvg(p) + '</svg>';
   var img = new Image();
   img.onload = function () {
     var c = document.createElement("canvas"); c.width = 1200; c.height = 900;
@@ -351,5 +507,5 @@ function renderPicture(p, done) {
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
 function pictureThumbUrl(p) {
-  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">' + p.svg + '</svg>');
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">' + pictureSvg(p) + '</svg>');
 }

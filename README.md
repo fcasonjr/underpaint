@@ -12,7 +12,7 @@ Notes: Procreate palettes hold 30 colors, so the zip contains one `palette_<from
 
 Press **Paint it here** to paint the picture in the browser with no export: a full-screen view with a numbered palette beside the image, tap-to-fill, a "Match numbers" check, a hint tint, undo, peek, pinch zoom and a Save picture button. The code is the "paint in the browser" block in `src/template.html`.
 
-Press **Pictures to paint** for the start page: 16 ready-made pictures (landscapes, animals, airplanes, sports) that open straight into painting. Progress autosaves in the browser's IndexedDB (nothing is uploaded), photos you paint appear under "My photos", and `/#pictures` opens the start page directly. The pictures are original flat-color SVG illustrations in `src/pictures.js`; add one by appending an entry to `PICTURES` and rebuilding.
+Press **Pictures to paint** for the start page: 22 ready-made pictures (landscapes, animals, airplanes, sports, plus six harder impressionist-style "Painterly" scenes) that open straight into painting. Progress autosaves in the browser's IndexedDB (nothing is uploaded), photos you paint appear under "My photos", and `/#pictures` opens the start page directly. The pictures are original flat-color SVG illustrations in `src/pictures.js`; add one by appending an entry to `PICTURES` and rebuilding. The Painterly scenes are generated at runtime from seeded brush dabs (`pbDabs` and the `scene...` functions), so they add no file size.
 
 ## Layout
 
