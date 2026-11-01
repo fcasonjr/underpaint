@@ -1,6 +1,6 @@
 # Underpaint: project notes
 
-Last updated: 2026-11-01 (paint-in-browser mode added) (legend, numbered color key, split swatches, outlines/numbers split for bucket fill)
+Last updated: 2026-11-01 (pictures start page and saved progress added; earlier: paint-in-browser mode) (legend, numbered color key, split swatches, outlines/numbers split for bucket fill)
 
 ## What it is
 
@@ -26,6 +26,7 @@ underpaint/
 └── src/
     ├── template.html     UI, styles, app logic, Help dialog
     ├── core.js           image-processing engine
+    ├── pictures.js       16 ready-made SVG pictures + renderPicture()
     ├── build.py          combines the three into index.html
     └── vendor/
         ├── ag-psd.bundle.js    ag-psd 30.2.0 (MIT), writes the PSD
@@ -51,7 +52,13 @@ Preset (Balanced, Easy to paint, Portrait, Detailed scene, Custom), Grayscale (v
 
 ## Paint in the browser (added 2026-11-01)
 
-A **Paint it here** button opens a full-screen painting view so someone can color the picture without Procreate or any files (made for a child to use on an iPad). Palette beside the image, tap a numbered color then tap a spot to fill it. Features: Match numbers (only the right color fills a spot, wrong tap wiggles the correct square), Show where (blue tint on spots for the selected color), Undo, Peek (hold to see finished colors), Lines toggle, pinch/scroll zoom and drag pan, Save picture (PNG), finished card. Regions are 4-connected areas of one palette number, found in the browser (same rule as the engine). Tested in headless Chromium on desktop, iPad-size and phone-size viewports with 58 and 991 regions (fill about 35 ms); not tested on a real iPad yet. Progress is not saved if the page closes.
+A **Paint it here** button opens a full-screen painting view so someone can color the picture without Procreate or any files (made for a child to use on an iPad). Palette beside the image, tap a numbered color then tap a spot to fill it. Features: Match numbers (only the right color fills a spot, wrong tap wiggles the correct square), Show where (blue tint on spots for the selected color), Undo, Peek (hold to see finished colors), Lines toggle, pinch/scroll zoom and drag pan, Save picture (PNG), finished card. Regions are 4-connected areas of one palette number, found in the browser (same rule as the engine). Tested in headless Chromium on desktop, iPad-size and phone-size viewports with 58 and 991 regions (fill about 35 ms); not tested on a real iPad yet. 
+
+## Pictures start page and saved progress (added 2026-11-01)
+
+**Pictures to paint** (header button, or open `/#pictures`) shows 16 original flat-color SVG illustrations in four categories (landscapes, animals, airplanes, sports), defined in `src/pictures.js` (`PICTURES`, 800 x 600 viewBox; each has `k`, `detail`, `smooth`). Choosing one renders it to a 1200 x 900 canvas, runs the normal engine with the picture's settings (about 3.5 s in headless Chromium) and opens Paint mode. Pictures come out with 11 to 39 regions, so they are easy; make a picture harder by raising `k` or adding detail.
+
+Progress autosaves (700 ms after each fill, on Back, and when the tab is hidden) to IndexedDB database `underpaint`: store `paintings` (id `pic:<picId>` or `photo:<timestamp>`, painted-region array, counts, thumbnail, settings, signature) and store `photos` (original photo Blob, written once). Resume re-runs the engine with the saved settings and reapplies the painted array; the engine is deterministic. A signature (size, region count, palette) guards against a mismatch, in which case the painting starts fresh with a toast. Photos you paint appear under My photos. The built-in sample is not saved. Start over and Remove use a two-tap confirm. If IndexedDB is unavailable the gallery says progress will not be kept. Tested in headless Chromium: reload resume, start over, all 16 pictures, photo resume; not tested on a real iPad or Safari (Safari private mode and storage eviction are the likely trouble spots). `build.py` inlines `pictures.js` at the `/*__PICTURES__*/` marker.
 
 ## What is in the downloaded zip
 
@@ -69,7 +76,7 @@ A **Paint it here** button opens a full-screen painting view so someone can colo
 
 ## Possible next steps
 
-- Test Paint mode on a real iPad (touch, pinch zoom, Apple Pencil). Ideas: save progress so it survives closing the tab, a simple kid landing page with ready-made pictures, sharing a puzzle by link or file, a completion celebration.
+- Test Paint mode on a real iPad (touch, pinch zoom, Apple Pencil). Ideas: more pictures (or a harder tier), sharing a puzzle by link or file, a completion celebration.
 
 - Test the PSD, swatches and legend workflow in Procreate and Fresco, then fix the Help text based on what actually happens. Swatches did import in Procreate.
 - If Procreate supports swatch names, put each number in its swatch name (not verified).

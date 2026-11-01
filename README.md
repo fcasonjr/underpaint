@@ -12,13 +12,16 @@ Notes: Procreate palettes hold 30 colors, so the zip contains one `palette_<from
 
 Press **Paint it here** to paint the picture in the browser with no export: a full-screen view with a numbered palette beside the image, tap-to-fill, a "Match numbers" check, a hint tint, undo, peek, pinch zoom and a Save picture button. The code is the "paint in the browser" block in `src/template.html`.
 
+Press **Pictures to paint** for the start page: 16 ready-made pictures (landscapes, animals, airplanes, sports) that open straight into painting. Progress autosaves in the browser's IndexedDB (nothing is uploaded), photos you paint appear under "My photos", and `/#pictures` opens the start page directly. The pictures are original flat-color SVG illustrations in `src/pictures.js`; add one by appending an entry to `PICTURES` and rebuilding.
+
 ## Layout
 
 - `index.html`: the built, self-contained app. This is what gets deployed.
 - `src/template.html`: UI and app code.
+- `src/pictures.js`: the ready-made pictures (SVG) and the code that draws them to a canvas.
 - `src/core.js`: the image-processing engine (Lab k-means, smoothing, region cleanup, number placement).
 - `src/vendor/ag-psd.bundle.js`: [ag-psd](https://github.com/Agamnentzar/ag-psd) 30.2.0 (MIT), used to write the PSD.
-- `src/build.py`: combines the three into `index.html`.
+- `src/build.py`: combines the sources into `index.html`.
 
 ## Editing
 

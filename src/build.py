@@ -30,7 +30,11 @@ cdn = '<script src="https://cdn.jsdelivr.net/npm/ag-psd@30.2.0/dist/bundle.js"><
 assert cdn in t
 t = t.replace(cdn, '<script>\n' + psd + '\n</script>')
 t = t.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', '')
+pics = open(os.path.join(SRC,'pictures.js')).read()
+assert '</script' not in pics
 t = t.replace('/*__CORE__*/', core)
+assert '/*__PICTURES__*/' in t
+t = t.replace('/*__PICTURES__*/', pics)
 
 # 3. a real document around it
 split = t.index('<div class="wrap">')

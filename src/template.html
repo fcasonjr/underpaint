@@ -118,6 +118,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: flex-start; justify-content: space-between; }
 header .intro { flex: 1 1 420px; min-width: 0; }
+.hbtns { display: flex; gap: 8px; flex-wrap: wrap; }
 .helpbtn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; }
 .helpbtn i { font: 600 13px var(--font-display); font-style: normal; width: 20px; height: 20px; border-radius: 50%;
   display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); }
@@ -195,6 +196,29 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
   .paint-bar button { padding: 7px 10px; font-size: 13px; }
   .pprog { font-size: 12px; }
 }
+
+.gallery { position: fixed; inset: 0; z-index: 15; background: var(--ground); display: flex; flex-direction: column; }
+.gal-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: var(--panel); border-bottom: 1px solid var(--rule);
+  padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top, 0px)); }
+.gal-bar h2 { margin: 0; font: 600 22px var(--font-display); flex: 1 1 auto; }
+.gal-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 16px 0; }
+.gal-tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.gal-body { flex: 1 1 auto; overflow: auto; padding: 14px 16px 28px; padding-bottom: max(28px, env(safe-area-inset-bottom, 0px)); }
+.gal-body h3 { font: 600 16px var(--font-display); margin: 18px 0 10px; }
+.gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.gal-card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+.gal-tile { display: block; width: 100%; padding: 0; border: 0; border-radius: 0; background: none; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.gal-tile img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--well); }
+.gal-tile .gt { display: block; padding: 8px 12px 2px; font: 600 15px var(--font-display); }
+.gal-tile .gs { display: block; padding: 0 12px 10px; font: 500 12px var(--font-mono); color: var(--ink-soft); }
+.gal-tile:hover:not(:disabled) { border-color: transparent; }
+.gal-tile:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.gal-bar2 { height: 5px; background: var(--rule); margin: 0 12px 10px; border-radius: 3px; overflow: hidden; }
+.gal-bar2 i { display: block; height: 100%; background: var(--accent); }
+.gal-small { margin: 0 12px 12px; padding: 5px 10px; font-size: 12.5px; align-self: flex-start; }
+@media (max-width: 560px) { .gal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .gal-tile .gt { font-size: 14px; } }
+.gal-busy { position: absolute; inset: 0; z-index: 2; background: rgba(15, 19, 26, .62); display: grid; place-items: center; color: #fff; font: 600 20px var(--font-display); text-align: center; padding: 20px; }
+.gal-busy[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .pchip.nudge { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .track i { transition: none; } }
 </style>
@@ -205,7 +229,8 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
       <h1>Underpaint</h1>
       <p>Turn a photo into flat, numbered color regions: a ready-made underpainting to build on in Procreate or Fresco. Your photo is processed in this tab and never uploaded.</p>
     </div>
-    <button type="button" class="helpbtn" id="helpbtn" aria-haspopup="dialog"><i aria-hidden="true">?</i> Help</button>
+    <div class="hbtns"><button type="button" class="helpbtn primary" id="picbtn" aria-haspopup="dialog">Pictures to paint</button>
+    <button type="button" class="helpbtn" id="helpbtn" aria-haspopup="dialog"><i aria-hidden="true">?</i> Help</button></div>
   </header>
 
   <div class="grid">
@@ -340,9 +365,12 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
       <li><b>Tap a spot</b> with the same number to fill it. With <b>Show where</b> on, the spots that use the selected color glow blue so they are easy to find.</li>
       <li><b>Wrong color?</b> With <b>Match numbers</b> on, the app tells you which number that spot is and wiggles the right square. Turn it off to paint any color anywhere, like a normal coloring page.</li>
       <li><b>Move around:</b> pinch or scroll to zoom, drag to move, <b>Fit</b> to see everything. <b>Undo</b> takes back the last fill. Hold <b>Peek</b> to see the finished colors, and switch <b>Lines</b> off to see the picture without outlines.</li>
-      <li><b>Save picture</b> downloads what you have painted as a PNG. Painting is not kept if you close the page, so save before you leave.</li>
+      <li>Your painting is <b>saved on this device</b> as you go. Close the page and come back later, and press <b>Pictures to paint</b> to carry on. <b>Save picture</b> downloads what you have painted as a PNG to keep or share.</li>
     </ol>
     <p class="soft">For a first try, or for a younger painter, choose the <b>Easy to paint</b> preset before you press Paint it here: fewer colors and bigger spots.</p>
+
+    <h3>Pictures to paint</h3>
+    <p>Press <b>Pictures to paint</b> at the top for ready-made pictures: landscapes, animals, airplanes and sports. They are original illustrations drawn for Underpaint. Choose one and it opens ready to paint. Each picture shows how far you got, and <b>Start over</b> clears it. Photos you paint are listed under <b>My photos</b>. Progress is kept in this browser on this device only; clearing the site's data or using a private window will lose it. Bookmark <code>#pictures</code> on the address (for example <code>underpaint.netlify.app/#pictures</code>) to open straight to the pictures.</p>
 
     <h3>Presets</h3>
     <table class="tbl">
@@ -444,6 +472,20 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
     <div class="ppal" id="pPal" role="group" aria-label="Colors"></div>
   </div>
 </div>
+<div class="gallery" id="gallery" role="dialog" aria-modal="true" aria-label="Pictures to paint" hidden>
+  <div class="gal-bar">
+    <h2>Pick a picture to paint</h2>
+    <button type="button" id="galPhoto">Use my own photo</button>
+    <button type="button" id="galClose">Close</button>
+  </div>
+  <div class="gal-tabs" id="galTabs" role="tablist" aria-label="Kinds of pictures"></div>
+  <div class="gal-body">
+    <div class="gal-grid" id="galGrid"></div>
+    <div id="galMine" hidden><h3>My photos</h3><div class="gal-grid" id="galMineGrid"></div></div>
+    <p class="note" id="galNote" style="margin-top:16px"></p>
+  </div>
+  <div class="gal-busy" id="galBusy" role="status" hidden>Getting your picture ready&hellip;</div>
+</div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script type="text/plain" id="core-src">/*__CORE__*/</script>
@@ -453,7 +495,8 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var coreSrc = $("core-src").textContent;
-  var state = { src: null, srcName: "", result: null, canvases: null, tab: "sheet", worker: null, timer: null, urls: {}, run: 0, downloads: undefined };
+/*__PICTURES__*/
+  var state = { src: null, srcName: "", result: null, canvases: null, tab: "sheet", worker: null, timer: null, urls: {}, run: 0, downloads: undefined, file: null, picId: null, cur: null, resume: null, after: null, fromGallery: false };
 
   // ---------- sample scene (stands in until a photo is chosen) ----------
   function makeSample() {
@@ -569,7 +612,7 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
     state.worker = startWorker(img.data, w, h, P,
       function (s2, f) { if (my !== state.run) return; $("busytext").textContent = s2; $("fill").style.width = Math.round(f * 100) + "%"; },
       function (r) { if (my !== state.run) return; state.worker = null; finish(r, c); },
-      function () { if (my !== state.run) return; $("busy").hidden = true; toast("Processing failed. Try a smaller output size."); });
+      function () { if (my !== state.run) return; $("busy").hidden = true; state.after = null; $("galBusy").hidden = true; toast("Processing failed. Try a smaller output size."); });
   }
 
   // ---------- rendering ----------
@@ -625,6 +668,7 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
     $("stats").textContent = r.colors + " colors  ·  " + r.regions + " regions  ·  " + w + " × " + h + " px";
     drawPalette(pal);
     showTab();
+    var fn = state.after; state.after = null; if (fn) fn();
   }
   function showTab() {
     $("fadewrap").hidden = state.tab !== "over";
@@ -802,7 +846,7 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
   // ---------- inputs ----------
   function loadFile(file) {
     if (!file || !/^image\//.test(file.type)) { toast("Choose an image file (JPG, PNG, WebP)."); return; }
-    var done = function (src) { state.src = src; state.srcName = file.name; $("srcname").textContent = file.name + ". Drop another to replace it."; run(); };
+    var done = function (src) { state.src = src; state.srcName = file.name; state.file = file; state.picId = null; state.cur = null; state.resume = null; $("srcname").textContent = file.name + ". Drop another to replace it."; run(); };
     if (window.createImageBitmap) {
       createImageBitmap(file).then(done, function () { toast("That image could not be read."); });
     } else {
@@ -1004,6 +1048,7 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
     if (s.undo.length > 500) s.undo.shift();
     if (s.remaining[s.sel] === 0 && s.left > 0 && s.check) s.sel = nextColor(s.sel);
     updateHint(); drawPaint(); refreshPalette();
+    scheduleSave();
     if (s.left === 0) $("pDone").hidden = false;
   }
   function undoPaint() {
@@ -1012,6 +1057,7 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
     applyRegion(u.k, u.prev);
     $("pDone").hidden = true;
     updateHint(); drawPaint(); refreshPalette();
+    scheduleSave();
   }
   // ----- zoom and pan -----
   function applyView() {
@@ -1101,6 +1147,15 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
       sel: 1, check: true, hint: true, lines: true, peek: false, undo: [], fit: 1,
       view: { s: 1, tx: 0, ty: 0 }, ctx: cvs.getContext("2d")
     };
+    var sig = r.w + "x" + r.h + ":" + reg.n + ":" + r.palette.map(hexOf).join("");
+    var cur = state.cur;
+    if (cur && cur.sig !== sig) { if (state.resume) toast("Couldn't restore the saved painting, so this one starts fresh."); cur = null; }
+    if (!cur) cur = newCur(sig);
+    state.cur = cur; paint.cur = cur;
+    var pr = state.resume; state.resume = null;
+    if (pr && cur && pr.length === reg.n + 1) {
+      for (i = 1; i <= reg.n; i++) if (pr[i] && pr[i] <= r.palette.length) applyRegion(i, pr[i]);
+    }
     for (i = 1; i < remaining.length; i++) if (remaining[i] > 0) { paint.sel = i; break; }
     setToggle("pHint", true); setToggle("pCheck", true); setToggle("pLines", true);
     $("pDone").hidden = true;
@@ -1109,13 +1164,15 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
     document.body.style.overflow = "hidden";
     refreshPalette(); updateHint(); drawPaint();
     requestAnimationFrame(function () { requestAnimationFrame(function () { if (paint) fitView(); }); });
+    $("galBusy").hidden = true;
     $("pBack").focus();
   }
   function closePaint() {
+    flushSave();
     $("paint").hidden = true; document.body.style.overflow = "";
     paint = null; ptrs = {};
     $("pCanvas").width = 1; $("pCanvas").height = 1;
-    $("paintbtn").focus();
+    if (state.fromGallery) openGallery(); else $("paintbtn").focus();
   }
   function savePainting() {
     var s = paint; if (!s) return;
@@ -1156,6 +1213,181 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
     var old = paint.fit; fitView();
     if (!atFit) { /* keep the person's zoom, just keep it on screen */ paint.view.s = Math.max(paint.fit * 0.6, Math.min(paint.fit * 10, paint.view.s * (paint.fit / old))); clampView(); applyView(); }
   });
+
+  // ---------- saved progress (IndexedDB) and the pictures start page ----------
+  var DB = null;
+  function openDB() {
+    return new Promise(function (res) {
+      try {
+        var q = indexedDB.open("underpaint", 1);
+        q.onupgradeneeded = function () { var d = q.result; d.createObjectStore("paintings", { keyPath: "id" }); d.createObjectStore("photos", { keyPath: "id" }); };
+        q.onsuccess = function () { res(q.result); };
+        q.onerror = q.onblocked = function () { res(null); };
+      } catch (e) { res(null); }
+    });
+  }
+  var dbReady = openDB().then(function (d) { DB = d; return d; });
+  function dbDo(store, mode, fn) {
+    return dbReady.then(function (d) {
+      if (!d) return null;
+      return new Promise(function (res) {
+        try {
+          var t = d.transaction(store, mode), rq = fn(t.objectStore(store)), out = null;
+          if (rq) rq.onsuccess = function () { out = rq.result; };
+          t.oncomplete = function () { res(out); };
+          t.onerror = t.onabort = function () { res(null); };
+        } catch (e) { res(null); }
+      });
+    });
+  }
+  function dbAll(store) { return dbDo(store, "readonly", function (s) { return s.getAll(); }).then(function (r) { return r || []; }); }
+  function dbGet(store, id) { return dbDo(store, "readonly", function (s) { return s.get(id); }); }
+  function dbPut(store, rec) { return dbDo(store, "readwrite", function (s) { return s.put(rec); }); }
+  function dbDel(store, id) { return dbDo(store, "readwrite", function (s) { return s.delete(id); }); }
+
+  function ctlNow() {
+    return { k: +$("k").value, detail: +$("detail").value, smooth: +$("smooth").value, focus: +$("focus").value, size: $("size").value,
+      line: $("line").value, flatten: $("flatten").checked, tol: +$("tol").value, gray: $("gray").checked };
+  }
+  function applyCtl(c) {
+    ["k", "detail", "smooth", "focus"].forEach(function (id) { setValue(id, c[id]); });
+    $("size").value = c.size; $("line").value = c.line;
+    $("flatten").checked = !!c.flatten; $("tol").disabled = !c.flatten; if (c.tol != null) setValue("tol", c.tol);
+    $("gray").checked = !!c.gray; $("preset").value = "custom";
+  }
+  function newCur(sig) {
+    if (state.picId) {
+      var p = pictureById(state.picId);
+      return { id: "pic:" + state.picId, picId: state.picId, title: p ? p.title : "Picture", sig: sig, ctl: ctlNow() };
+    }
+    if (state.file) return { id: "photo:" + Date.now(), picId: null, title: state.srcName || "My photo", sig: sig, ctl: ctlNow(), file: state.file, needBlob: true };
+    return null; // the built-in sample is not saved
+  }
+  var saveT = null;
+  function scheduleSave() { clearTimeout(saveT); saveT = setTimeout(flushSave, 700); }
+  function flushSave() {
+    clearTimeout(saveT);
+    var s = paint; if (!s || !s.cur) return;
+    var cur = s.cur, t = newCanvas(240, Math.max(1, Math.round(240 * s.h / s.w))), g = t.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, t.width, t.height);
+    g.drawImage(s.pc, 0, 0, t.width, t.height);
+    g.drawImage(state.canvases.outlines, 0, 0, t.width, t.height);
+    var rec = { id: cur.id, picId: cur.picId, title: cur.title, sig: cur.sig, ctl: cur.ctl, painted: s.painted.slice(), total: s.total, left: s.left,
+      updated: Date.now(), thumb: t.toDataURL("image/jpeg", 0.72) };
+    if (cur.needBlob) { cur.needBlob = false; dbPut("photos", { id: cur.id, blob: cur.file }); }
+    dbPut("paintings", rec);
+  }
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flushSave(); });
+  window.addEventListener("pagehide", flushSave);
+
+  // ----- the start page -----
+  var galTab = "all", pendingDel = null;
+  function pictureById(id) { var l = typeof PICTURES === "undefined" ? [] : PICTURES; for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+  function galleryOpen() { return !$("gallery").hidden; }
+  function openGallery() {
+    if (typeof PICTURES === "undefined") return;
+    state.fromGallery = false;
+    $("gallery").hidden = false; document.body.style.overflow = "hidden";
+    buildTabs(); renderGallery();
+    var first = $("galTabs").querySelector('[aria-selected="true"]'); if (first) first.focus();
+  }
+  function closeGallery() { $("gallery").hidden = true; $("galBusy").hidden = true; if (!paint) document.body.style.overflow = ""; }
+  function buildTabs() {
+    var box = $("galTabs"); box.textContent = "";
+    [{ id: "all", label: "All" }].concat(PICTURE_CATS).forEach(function (c) {
+      var b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", c.id === galTab ? "true" : "false"); b.textContent = c.label;
+      b.addEventListener("click", function () { galTab = c.id; pendingDel = null; buildTabs(); renderGallery(); });
+      box.appendChild(b);
+    });
+  }
+  function statusText(rec) {
+    if (!rec) return "Not started";
+    var done = rec.total - rec.left;
+    return rec.left === 0 ? "Finished ✓" : Math.round(done / rec.total * 100) + "% painted";
+  }
+  function makeCard(imgSrc, title, rec, onOpen, delLabel, onDel) {
+    var card = document.createElement("div"); card.className = "gal-card";
+    var b = document.createElement("button"); b.type = "button"; b.className = "gal-tile";
+    var im = document.createElement("img"); im.alt = ""; im.src = imgSrc; im.loading = "lazy";
+    var t1 = document.createElement("span"); t1.className = "gt"; t1.textContent = title;
+    var t2 = document.createElement("span"); t2.className = "gs"; t2.textContent = statusText(rec) + (rec && rec.left ? " · Continue" : "");
+    b.appendChild(im); b.appendChild(t1); b.appendChild(t2);
+    b.setAttribute("aria-label", title + ", " + statusText(rec));
+    b.addEventListener("click", onOpen);
+    card.appendChild(b);
+    if (rec) {
+      var bar = document.createElement("div"); bar.className = "gal-bar2"; var f = document.createElement("i");
+      f.style.width = Math.round((rec.total - rec.left) / rec.total * 100) + "%"; bar.appendChild(f); card.appendChild(bar);
+      var d = document.createElement("button"); d.type = "button"; d.className = "gal-small";
+      d.textContent = pendingDel === rec.id ? "Tap again to confirm" : delLabel;
+      d.addEventListener("click", function () {
+        if (pendingDel !== rec.id) { pendingDel = rec.id; d.textContent = "Tap again to confirm"; return; }
+        pendingDel = null; onDel();
+      });
+      card.appendChild(d);
+    }
+    return card;
+  }
+  function renderGallery() {
+    dbAll("paintings").then(function (recs) {
+      var byId = {}; recs.forEach(function (r) { byId[r.id] = r; });
+      var grid = $("galGrid"); grid.textContent = "";
+      PICTURES.forEach(function (p) {
+        if (galTab !== "all" && p.cat !== galTab) return;
+        var rec = byId["pic:" + p.id];
+        grid.appendChild(makeCard(rec && rec.left < rec.total ? rec.thumb : pictureThumbUrl(p), p.title, rec,
+          function () { startPicture(p, rec); }, "Start over",
+          function () { dbDel("paintings", "pic:" + p.id).then(renderGallery); }));
+      });
+      var mine = recs.filter(function (r) { return !r.picId; }).sort(function (a, b) { return b.updated - a.updated; });
+      var mg = $("galMineGrid"); mg.textContent = ""; $("galMine").hidden = !mine.length;
+      mine.forEach(function (r) {
+        mg.appendChild(makeCard(r.thumb, r.title, r, function () { startPhoto(r); }, "Remove",
+          function () { dbDel("paintings", r.id).then(function () { return dbDel("photos", r.id); }).then(renderGallery); }));
+      });
+      $("galNote").textContent = DB ? "Your progress is saved on this device, in this browser." : "This browser is not allowing saved progress (a private window can do that), so paintings here will not be kept. Use Save picture to keep one.";
+    });
+  }
+  function beginRun() {
+    clearTimeout(state.timer);
+    $("galBusy").hidden = false; state.fromGallery = true;
+    state.after = function () { closeGallery(); state.fromGallery = true; openPaint(); };
+    run();
+  }
+  function startPicture(p, rec) {
+    $("galBusy").hidden = false;
+    renderPicture(p, function (c) {
+      if (!c) { $("galBusy").hidden = true; toast("That picture could not be drawn in this browser."); return; }
+      applyCtl({ k: p.k, detail: p.detail, smooth: p.smooth, focus: 0, size: "1600", line: $("line").value, flatten: false, tol: +$("tol").value, gray: false });
+      state.src = c; state.srcName = p.title; state.file = null; state.picId = p.id;
+      state.cur = rec ? { id: rec.id, picId: p.id, title: p.title, sig: rec.sig, ctl: rec.ctl } : null;
+      state.resume = rec && rec.left < rec.total ? rec.painted : null;
+      $("srcname").textContent = p.title + ". Drop a photo to use your own instead.";
+      beginRun();
+    });
+  }
+  function startPhoto(rec) {
+    $("galBusy").hidden = false;
+    dbGet("photos", rec.id).then(function (row) {
+      if (!row || !row.blob) { $("galBusy").hidden = true; toast("That photo is no longer saved."); return; }
+      var go = function (src) {
+        applyCtl(rec.ctl);
+        state.src = src; state.srcName = rec.title; state.file = row.blob; state.picId = null;
+        state.cur = { id: rec.id, picId: null, title: rec.title, sig: rec.sig, ctl: rec.ctl, file: row.blob, needBlob: false };
+        state.resume = rec.painted;
+        $("srcname").textContent = rec.title + ". Drop another to replace it.";
+        beginRun();
+      };
+      if (window.createImageBitmap) createImageBitmap(row.blob).then(go, function () { $("galBusy").hidden = true; toast("That photo could not be read."); });
+      else { var u = URL.createObjectURL(row.blob), im = new Image(); im.onload = function () { go(im); }; im.onerror = function () { $("galBusy").hidden = true; }; im.src = u; }
+    });
+  }
+  $("picbtn").addEventListener("click", openGallery);
+  $("galClose").addEventListener("click", closeGallery);
+  $("galPhoto").addEventListener("click", function () { closeGallery(); $("drop").focus(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && galleryOpen() && !paint) closeGallery(); });
+  if (location.hash === "#pictures") setTimeout(openGallery, 0);
 
   // ---------- downloads capability (lights up when available) ----------
   try {
