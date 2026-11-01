@@ -1,6 +1,6 @@
 # Underpaint: project notes
 
-Last updated: 2026-10-21 (grayscale option added) (legend, numbered color key, split swatches, outlines/numbers split for bucket fill)
+Last updated: 2026-11-01 (paint-in-browser mode added) (legend, numbered color key, split swatches, outlines/numbers split for bucket fill)
 
 ## What it is
 
@@ -49,6 +49,10 @@ Processing runs in a Web Worker so the page stays responsive.
 
 Preset (Balanced, Easy to paint, Portrait, Detailed scene, Custom), Grayscale (values only; converts the photo to gray before processing, independent of presets), Colors (4 to 64), Region size (1 to 5), Smoothing (0 to 3), Detail focus (0 to 3), Output size (1000 / 1600 / 2400), Line weight, Flatten backdrop with tolerance. The Help button in the app explains each one.
 
+## Paint in the browser (added 2026-11-01)
+
+A **Paint it here** button opens a full-screen painting view so someone can color the picture without Procreate or any files (made for a child to use on an iPad). Palette beside the image, tap a numbered color then tap a spot to fill it. Features: Match numbers (only the right color fills a spot, wrong tap wiggles the correct square), Show where (blue tint on spots for the selected color), Undo, Peek (hold to see finished colors), Lines toggle, pinch/scroll zoom and drag pan, Save picture (PNG), finished card. Regions are 4-connected areas of one palette number, found in the browser (same rule as the engine). Tested in headless Chromium on desktop, iPad-size and phone-size viewports with 58 and 991 regions (fill about 35 ms); not tested on a real iPad yet. Progress is not saved if the page closes.
+
 ## What is in the downloaded zip
 
 `underpaint.psd` (layers top to bottom: Numbers, Outlines (set as Reference), Paint here, Paper, hidden Color key + numbers, hidden Color key), `numbered_sheet.png`, `lines_and_numbers_transparent.png`, `outlines_only_transparent.png`, `lines_over_photo.png`, `color_key.png`, `color_key_numbered.png`, `legend.png` (numbered chips in swatch order, for Procreate's Reference window), `palette.txt`, and one `palette_<from>-<to>.swatches` per 30 colors.
@@ -64,6 +68,8 @@ Preset (Balanced, Easy to paint, Portrait, Detailed scene, Custom), Grayscale (v
 - Bucket-fill workflow (Color Drop in Procreate with the Outlines layer as Reference; Fill tool in Fresco) is described in the Help panel but untested in the apps. Fresco's exact option names are unverified.
 
 ## Possible next steps
+
+- Test Paint mode on a real iPad (touch, pinch zoom, Apple Pencil). Ideas: save progress so it survives closing the tab, a simple kid landing page with ready-made pictures, sharing a puzzle by link or file, a completion celebration.
 
 - Test the PSD, swatches and legend workflow in Procreate and Fresco, then fix the Help text based on what actually happens. Swatches did import in Procreate.
 - If Procreate supports swatch names, put each number in its swatch name (not verified).

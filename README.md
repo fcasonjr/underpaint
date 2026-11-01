@@ -10,6 +10,8 @@ Click **Help** in the top right of the app for a built-in guide: quick start, wh
 
 Notes: Procreate palettes hold 30 colors, so the zip contains one `palette_<from>-<to>.swatches` file per 30 colors, in number order. `legend.png` shows every number next to its color, for use in Procreate's Reference window. The PSD layers are, top to bottom: Numbers, Outlines (set as Reference), Paint here, Paper, and two hidden reference layers (Color key + numbers, Color key). Outlines and numbers are separate so the outlines can be used as the fill-reference layer for a bucket fill without the digits leaving holes.
 
+Press **Paint it here** to paint the picture in the browser with no export: a full-screen view with a numbered palette beside the image, tap-to-fill, a "Match numbers" check, a hint tint, undo, peek, pinch zoom and a Save picture button. The code is the "paint in the browser" block in `src/template.html`.
+
 ## Layout
 
 - `index.html`: the built, self-contained app. This is what gets deployed.

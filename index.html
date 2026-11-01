@@ -121,6 +121,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: var(--ink); color: var(--ground); padding: 9px 14px; border-radius: 8px; font-size: 13.5px; z-index: 5;
   max-width: calc(100% - 32px);
 }
+.toast { z-index: 40; }
 
 header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: flex-start; justify-content: space-between; }
 header .intro { flex: 1 1 420px; min-width: 0; }
@@ -152,6 +153,56 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
 .help-body .tbl th, .help-body .tbl td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 .help-body .tbl th { font-weight: 600; white-space: nowrap; }
 .help-body .tbl code { white-space: nowrap; }
+
+button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.paint { position: fixed; inset: 0; z-index: 20; background: var(--ground); display: flex; flex-direction: column; }
+.paint-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--panel); border-bottom: 1px solid var(--rule);
+  padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top, 0px));
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px));
+}
+.paint-bar .spacer { flex: 1 1 auto; }
+.paint-bar button { padding: 9px 12px; }
+.pprog { font: 500 13px var(--font-mono); color: var(--ink-soft); white-space: nowrap; }
+.paint-main { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 232px; }
+.pview { position: relative; overflow: hidden; background: var(--well); touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; }
+.pstage { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.pstage canvas { display: block; background: #fff; box-shadow: 0 2px 20px rgba(0, 0, 0, .22); }
+.pzoom { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 6px; }
+.pzoom button { padding: 8px 12px; min-width: 42px; }
+.ppal {
+  overflow: auto; padding: 10px; background: var(--panel); border-left: 1px solid var(--rule); display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; align-content: start;
+  padding-right: max(10px, env(safe-area-inset-right, 0px));
+}
+.pchip {
+  position: relative; height: 64px; border-radius: 10px; border: 2px solid rgba(0, 0, 0, .22); padding: 0;
+  font: 700 22px var(--font-display); display: grid; place-items: center;
+}
+.pchip .cnt { position: absolute; right: 5px; bottom: 3px; font: 500 11px var(--font-mono); opacity: .9; }
+.pchip[aria-pressed="true"] { outline: 3px solid var(--accent); outline-offset: 2px; transform: scale(1.04); }
+.pchip.done { opacity: .42; }
+.pchip.done .cnt { font-size: 14px; }
+.pchip.nudge { animation: pnudge .6s; }
+@keyframes pnudge { 0%, 100% { transform: none; } 25% { transform: translateX(-5px) scale(1.08); } 50% { transform: translateX(5px) scale(1.08); } 75% { transform: translateX(-3px); } }
+.pdone {
+  position: absolute; left: 50%; top: 14px; transform: translateX(-50%); width: min(420px, calc(100% - 24px)); z-index: 3;
+  background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .25);
+}
+.pdone b { font: 600 20px var(--font-display); }
+.pdone .row2 { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 899px) {
+  .paint-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .ppal { border-left: 0; border-top: 1px solid var(--rule); display: flex; overflow-x: auto; overflow-y: hidden; padding: 8px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
+  .pchip { flex: 0 0 62px; height: 62px; }
+}
+@media (max-width: 560px) {
+  .paint-bar { gap: 6px; padding-top: max(8px, env(safe-area-inset-top, 0px)); padding-bottom: 8px; }
+  .paint-bar button { padding: 7px 10px; font-size: 13px; }
+  .pprog { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .pchip.nudge { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .track i { transition: none; } }
 </style>
 
@@ -264,6 +315,7 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
         </div>
         <div class="tools">
           <label class="fade" id="fadewrap" hidden>Photo fade <input type="range" id="fade" min="20" max="90" value="60"></label>
+          <button id="paintbtn" class="primary" disabled>Paint it here</button>
           <button id="zoom" aria-pressed="false">Actual size</button>
         </div>
       </div>
@@ -290,6 +342,17 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
       <li><b>Download the layered set (.zip)</b>, unzip it, and open <code>underpaint.psd</code> in Procreate or Fresco.</li>
       <li><b>Paint on the layer named "Paint here."</b> The outlines and numbers sit on separate layers above it, so your color never covers them.</li>
     </ol>
+
+    <h3>Paint it right here</h3>
+    <p>No Procreate needed: press <b>Paint it here</b> above the preview and the picture opens full screen with your colors beside it, ready to paint on a tablet, phone or computer.</p>
+    <ol>
+      <li><b>Pick a color</b> from the numbered squares. The small number on each square is how many spots still need that color, and a check mark means it is finished.</li>
+      <li><b>Tap a spot</b> with the same number to fill it. With <b>Show where</b> on, the spots that use the selected color glow blue so they are easy to find.</li>
+      <li><b>Wrong color?</b> With <b>Match numbers</b> on, the app tells you which number that spot is and wiggles the right square. Turn it off to paint any color anywhere, like a normal coloring page.</li>
+      <li><b>Move around:</b> pinch or scroll to zoom, drag to move, <b>Fit</b> to see everything. <b>Undo</b> takes back the last fill. Hold <b>Peek</b> to see the finished colors, and switch <b>Lines</b> off to see the picture without outlines.</li>
+      <li><b>Save picture</b> downloads what you have painted as a PNG. Painting is not kept if you close the page, so save before you leave.</li>
+    </ol>
+    <p class="soft">For a first try, or for a younger painter, choose the <b>Easy to paint</b> preset before you press Paint it here: fewer colors and bigger spots.</p>
 
     <h3>Presets</h3>
     <table class="tbl">
@@ -366,6 +429,31 @@ dialog.help::backdrop { background: rgba(8, 12, 22, .55); }
     <details><summary>Can I use it offline?</summary><p>Once the page has loaded, processing needs no connection. The page loads its fonts from the web, so without a connection it falls back to your system fonts.</p></details>
   </div>
 </dialog>
+<div class="paint" id="paint" role="dialog" aria-modal="true" aria-label="Paint by number" hidden>
+  <div class="paint-bar">
+    <button type="button" id="pBack">Back</button>
+    <button type="button" id="pUndo" disabled>Undo</button>
+    <button type="button" id="pHint" class="toggle" aria-pressed="true" title="Tint the spots that use the selected color">Show where</button>
+    <button type="button" id="pCheck" class="toggle" aria-pressed="true" title="On: a color only fills spots with its number. Off: paint any color anywhere.">Match numbers</button>
+    <button type="button" id="pLines" class="toggle" aria-pressed="true">Lines</button>
+    <button type="button" id="pPeek" title="Hold to see the finished colors">Peek</button>
+    <span class="spacer"></span>
+    <span class="pprog" id="pProg" role="status"></span>
+    <button type="button" id="pSave" class="primary">Save picture</button>
+  </div>
+  <div class="paint-main">
+    <div class="pview" id="pView">
+      <div class="pstage" id="pStage"><canvas id="pCanvas" role="img" aria-label="Picture to paint. Choose a color, then tap a spot with the same number."></canvas></div>
+      <div class="pzoom"><button type="button" id="pOut" aria-label="Zoom out">&minus;</button><button type="button" id="pFit">Fit</button><button type="button" id="pIn" aria-label="Zoom in">+</button></div>
+      <div class="pdone" id="pDone" hidden>
+        <b>All painted!</b>
+        <span class="note">Every spot is filled in. Save your picture, or switch Lines off to see it without outlines.</span>
+        <div class="row2"><button type="button" class="primary" id="pDoneSave">Save picture</button><button type="button" id="pDoneKeep">Keep looking</button></div>
+      </div>
+    </div>
+    <div class="ppal" id="pPal" role="group" aria-label="Colors"></div>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script type="text/plain" id="core-src">/* Paint-by-number core. Pure functions, no DOM: runs in a Web Worker and in Node.
@@ -24244,7 +24332,7 @@ module.exports = function whichTypedArray(value) {
     P.lineWidth = Math.max(1, Math.round(P.maxDim / 1600 * +$("line").value));
     if (state.worker) state.worker.terminate();
     $("busy").hidden = false; $("busytext").textContent = "Starting"; $("fill").style.width = "2%";
-    ["dlzip", "dlsheet", "dlkey"].forEach(function (id) { $(id).disabled = true; });
+    ["dlzip", "dlsheet", "dlkey", "paintbtn"].forEach(function (id) { $(id).disabled = true; });
     state.worker = startWorker(img.data, w, h, P,
       function (s2, f) { if (my !== state.run) return; $("busytext").textContent = s2; $("fill").style.width = Math.round(f * 100) + "%"; },
       function (r) { if (my !== state.run) return; state.worker = null; finish(r, c); },
@@ -24299,6 +24387,7 @@ module.exports = function whichTypedArray(value) {
     state.canvases = { sheet: sheet, key: key, keyNum: keyNum, lines: lines, outlines: outlines, numbers: numbers, legend: makeLegend(pal) };
     composeOver();
     $("busy").hidden = true;
+    $("paintbtn").disabled = false;
     ["dlzip", "dlsheet", "dlkey"].forEach(function (id) { $(id).disabled = !state.downloads; });
     $("stats").textContent = r.colors + " colors  ·  " + r.regions + " regions  ·  " + w + " × " + h + " px";
     drawPalette(pal);
@@ -24557,6 +24646,283 @@ module.exports = function whichTypedArray(value) {
     $("helpclose").addEventListener("click", close);
     dlg.addEventListener("click", function (e) { if (e.target === dlg) close(); });
   })();
+
+  // ---------- paint in the browser ----------
+  var paint = null;
+  function newCanvas(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+  // regions = 4-connected areas of one palette number (the same rule the engine uses)
+  function buildRegions(r) {
+    var w = r.w, h = r.h, N = w * h, num = r.num, id = new Int32Array(N), stack = new Int32Array(N);
+    var col = [0], X0 = [0], Y0 = [0], X1 = [0], Y1 = [0], count = 0;
+    for (var i = 0; i < N; i++) {
+      if (id[i] || !num[i]) continue;
+      count++;
+      var l = num[i], sp = 0, bx0 = w, by0 = h, bx1 = 0, by1 = 0;
+      id[i] = count; stack[sp++] = i;
+      while (sp) {
+        var p = stack[--sp], x = p % w, y = (p - x) / w;
+        if (x < bx0) bx0 = x; if (x > bx1) bx1 = x; if (y < by0) by0 = y; if (y > by1) by1 = y;
+        if (x > 0 && !id[p - 1] && num[p - 1] === l) { id[p - 1] = count; stack[sp++] = p - 1; }
+        if (x < w - 1 && !id[p + 1] && num[p + 1] === l) { id[p + 1] = count; stack[sp++] = p + 1; }
+        if (p >= w && !id[p - w] && num[p - w] === l) { id[p - w] = count; stack[sp++] = p - w; }
+        if (p < N - w && !id[p + w] && num[p + w] === l) { id[p + w] = count; stack[sp++] = p + w; }
+      }
+      col.push(l); X0.push(bx0); Y0.push(by0); X1.push(bx1); Y1.push(by1);
+    }
+    return { id: id, n: count, col: Uint8Array.from(col), x0: Int32Array.from(X0), y0: Int32Array.from(Y0), x1: Int32Array.from(X1), y1: Int32Array.from(Y1) };
+  }
+  function drawPaint() {
+    var s = paint; if (!s) return;
+    var g = s.ctx;
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, s.w, s.h);
+    if (s.peek) { g.drawImage(state.canvases.key, 0, 0); return; }
+    g.drawImage(s.pc, 0, 0);
+    if (s.hint) g.drawImage(s.hc, 0, 0);
+    if (s.lines) g.drawImage(state.canvases.outlines, 0, 0);
+    g.drawImage(s.nc, 0, 0);
+  }
+  function updateHint() {
+    var s = paint, hd = s.hd.data, id = s.reg.id, col = s.reg.col, st = s.painted, sel = s.sel, N = s.N;
+    hd.fill(0);
+    if (s.hint) {
+      for (var p = 0; p < N; p++) {
+        var k = id[p];
+        if (k && col[k] === sel && !st[k]) { var o = p * 4; hd[o] = 39; hd[o + 1] = 66; hd[o + 2] = 214; hd[o + 3] = 95; }
+      }
+    }
+    s.hc.getContext("2d").putImageData(s.hd, 0, 0);
+  }
+  function refreshPalette() {
+    var s = paint, chips = $("pPal").children;
+    for (var i = 0; i < chips.length; i++) {
+      var n = i + 1, left = s.remaining[n], b = chips[i];
+      b.setAttribute("aria-pressed", n === s.sel ? "true" : "false");
+      b.classList.toggle("done", left === 0);
+      b.querySelector(".cnt").textContent = left === 0 ? "✓" : String(left);
+      b.setAttribute("aria-label", "Color " + n + (left === 0 ? ", finished" : ", " + left + " left"));
+    }
+    var done = s.total - s.left;
+    $("pProg").textContent = done + " of " + s.total + " spots";
+    $("pUndo").disabled = !s.undo.length;
+  }
+  function buildPaintPalette() {
+    var box = $("pPal"); box.textContent = "";
+    paint.r.palette.forEach(function (c, i) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "pchip";
+      b.style.background = hexOf(c); b.style.color = inkFor(c);
+      b.appendChild(document.createTextNode(String(i + 1)));
+      var cnt = document.createElement("span"); cnt.className = "cnt"; b.appendChild(cnt);
+      b.addEventListener("click", function () { selectColor(i + 1); });
+      box.appendChild(b);
+    });
+  }
+  function selectColor(n) {
+    var s = paint; if (!s) return;
+    s.sel = n; updateHint(); drawPaint(); refreshPalette();
+    var chip = $("pPal").children[n - 1];
+    if (chip && chip.scrollIntoView) { try { chip.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} }
+  }
+  function setRegion(k, ci) {
+    var s = paint, w = s.w, id = s.reg.id, d = s.pd.data, nd = s.nd.data;
+    var c = ci ? s.r.palette[ci - 1] : null;
+    var x0 = s.reg.x0[k], x1 = s.reg.x1[k], y0 = s.reg.y0[k], y1 = s.reg.y1[k];
+    for (var y = y0; y <= y1; y++) {
+      for (var x = x0, p = y * w + x0; x <= x1; x++, p++) {
+        if (id[p] !== k) continue;
+        var o = p * 4;
+        if (c) { d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255; nd[o + 3] = 0; }
+        else { d[o + 3] = 0; nd[o + 3] = s.alpha0[p]; }
+      }
+    }
+    s.pc.getContext("2d").putImageData(s.pd, 0, 0, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+    s.nc.getContext("2d").putImageData(s.nd, 0, 0, x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  }
+  function applyRegion(k, ci) {
+    var s = paint, prev = s.painted[k], rc = s.reg.col[k];
+    setRegion(k, ci);
+    s.painted[k] = ci;
+    if (!prev && ci) { s.remaining[rc]--; s.left--; }
+    else if (prev && !ci) { s.remaining[rc]++; s.left++; }
+    return prev;
+  }
+  function nudge(n) {
+    var chip = $("pPal").children[n - 1]; if (!chip) return;
+    chip.classList.remove("nudge"); void chip.offsetWidth; chip.classList.add("nudge");
+    if (chip.scrollIntoView) { try { chip.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} }
+  }
+  function nextColor(from) {
+    var s = paint, K = s.r.palette.length;
+    for (var i = 1; i <= K; i++) { var n = ((from - 1 + i) % K) + 1; if (s.remaining[n] > 0) return n; }
+    return from;
+  }
+  function paintAt(clientX, clientY) {
+    var s = paint; if (!s || s.peek) return;
+    var rect = $("pCanvas").getBoundingClientRect();
+    var x = Math.floor((clientX - rect.left) / rect.width * s.w), y = Math.floor((clientY - rect.top) / rect.height * s.h);
+    if (x < 0 || y < 0 || x >= s.w || y >= s.h) return;
+    var k = s.reg.id[y * s.w + x]; if (!k) return;
+    var want = s.reg.col[k];
+    if (s.check) {
+      if (s.painted[k]) return;
+      if (want !== s.sel) { nudge(want); toast("That spot is number " + want); return; }
+    } else if (s.painted[k] === s.sel) return;
+    var prev = applyRegion(k, s.sel);
+    s.undo.push({ k: k, prev: prev });
+    if (s.undo.length > 500) s.undo.shift();
+    if (s.remaining[s.sel] === 0 && s.left > 0 && s.check) s.sel = nextColor(s.sel);
+    updateHint(); drawPaint(); refreshPalette();
+    if (s.left === 0) $("pDone").hidden = false;
+  }
+  function undoPaint() {
+    var s = paint; if (!s || !s.undo.length) return;
+    var u = s.undo.pop();
+    applyRegion(u.k, u.prev);
+    $("pDone").hidden = true;
+    updateHint(); drawPaint(); refreshPalette();
+  }
+  // ----- zoom and pan -----
+  function applyView() {
+    var s = paint, v = s.view;
+    $("pStage").style.transform = "translate(" + v.tx + "px," + v.ty + "px) scale(" + v.s + ")";
+  }
+  function clampView() {
+    var s = paint, v = s.view, box = $("pView"), vw = box.clientWidth, vh = box.clientHeight, m = 80;
+    var iw = s.w * v.s, ih = s.h * v.s;
+    v.tx = Math.min(vw - m, Math.max(m - iw, v.tx));
+    v.ty = Math.min(vh - m, Math.max(m - ih, v.ty));
+  }
+  function fitView() {
+    var s = paint, box = $("pView"), vw = box.clientWidth, vh = box.clientHeight, pad = 14;
+    var sc = Math.max(0.05, Math.min((vw - pad * 2) / s.w, (vh - pad * 2) / s.h));
+    s.fit = sc; s.view.s = sc; s.view.tx = (vw - s.w * sc) / 2; s.view.ty = (vh - s.h * sc) / 2;
+    applyView();
+  }
+  function zoomAt(cx, cy, factor) {
+    var s = paint, v = s.view, rect = $("pView").getBoundingClientRect();
+    var px = cx - rect.left, py = cy - rect.top;
+    var ns = Math.min(s.fit * 10, Math.max(s.fit * 0.6, v.s * factor)), ratio = ns / v.s;
+    v.tx = px - (px - v.tx) * ratio; v.ty = py - (py - v.ty) * ratio; v.s = ns;
+    clampView(); applyView();
+  }
+  function zoomCentre(factor) { var r = $("pView").getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, factor); }
+  var ptrs = {}, tapOK = false;
+  function ptrList() { return Object.keys(ptrs).map(function (k) { return ptrs[k]; }); }
+  (function wirePaintView() {
+    var view = $("pView");
+    view.addEventListener("pointerdown", function (e) {
+      if (!paint) return;
+      if (e.target.closest && e.target.closest("button")) return;   // zoom buttons and the finished card keep their own taps
+      try { view.setPointerCapture(e.pointerId); } catch (err) {}
+      ptrs[e.pointerId] = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false };
+      tapOK = Object.keys(ptrs).length === 1;
+    });
+    view.addEventListener("pointermove", function (e) {
+      var pt = ptrs[e.pointerId]; if (!pt || !paint) return;
+      var list = ptrList();
+      if (list.length >= 2) {
+        var a = list[0], b = list[1];
+        var d0 = Math.hypot(a.x - b.x, a.y - b.y), mx0 = (a.x + b.x) / 2, my0 = (a.y + b.y) / 2;
+        pt.x = e.clientX; pt.y = e.clientY;
+        var d1 = Math.hypot(a.x - b.x, a.y - b.y), mx1 = (a.x + b.x) / 2, my1 = (a.y + b.y) / 2;
+        tapOK = false;
+        paint.view.tx += mx1 - mx0; paint.view.ty += my1 - my0;
+        if (d0 > 0) zoomAt(mx1, my1, d1 / d0); else { clampView(); applyView(); }
+        return;
+      }
+      var dx = e.clientX - pt.x, dy = e.clientY - pt.y;
+      if (!pt.moved && Math.hypot(e.clientX - pt.sx, e.clientY - pt.sy) > 8) pt.moved = true;
+      pt.x = e.clientX; pt.y = e.clientY;
+      if (pt.moved) { tapOK = false; paint.view.tx += dx; paint.view.ty += dy; clampView(); applyView(); }
+    });
+    function end(e, cancelled) {
+      var pt = ptrs[e.pointerId]; if (!pt) return;
+      delete ptrs[e.pointerId];
+      if (!cancelled && tapOK && !pt.moved && paint) paintAt(e.clientX, e.clientY);
+      if (!Object.keys(ptrs).length) tapOK = false;
+    }
+    view.addEventListener("pointerup", function (e) { end(e, false); });
+    view.addEventListener("pointercancel", function (e) { end(e, true); });
+    view.addEventListener("wheel", function (e) {
+      if (!paint) return; e.preventDefault();
+      zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)));
+    }, { passive: false });
+  })();
+  function setToggle(id, on) { $(id).setAttribute("aria-pressed", on ? "true" : "false"); }
+  function openPaint() {
+    var r = state.result, cv = state.canvases; if (!r || !cv) return;
+    var w = r.w, h = r.h, N = w * h, i;
+    var reg = buildRegions(r);
+    var pc = newCanvas(w, h), nc = newCanvas(w, h), hc = newCanvas(w, h);
+    var nd = cv.numbers.getContext("2d").getImageData(0, 0, w, h);
+    var alpha0 = new Uint8Array(N); for (i = 0; i < N; i++) alpha0[i] = nd.data[4 * i + 3];
+    nc.getContext("2d").putImageData(nd, 0, 0);
+    var remaining = new Int32Array(r.palette.length + 1);
+    for (i = 1; i <= reg.n; i++) remaining[reg.col[i]]++;
+    var cvs = $("pCanvas"); cvs.width = w; cvs.height = h; cvs.style.width = w + "px"; cvs.style.height = h + "px";
+    paint = {
+      r: r, w: w, h: h, N: N, reg: reg,
+      pc: pc, pd: pc.getContext("2d").createImageData(w, h),
+      nc: nc, nd: nd, alpha0: alpha0,
+      hc: hc, hd: hc.getContext("2d").createImageData(w, h),
+      painted: new Uint8Array(reg.n + 1), remaining: remaining, total: reg.n, left: reg.n,
+      sel: 1, check: true, hint: true, lines: true, peek: false, undo: [], fit: 1,
+      view: { s: 1, tx: 0, ty: 0 }, ctx: cvs.getContext("2d")
+    };
+    for (i = 1; i < remaining.length; i++) if (remaining[i] > 0) { paint.sel = i; break; }
+    setToggle("pHint", true); setToggle("pCheck", true); setToggle("pLines", true);
+    $("pDone").hidden = true;
+    buildPaintPalette();
+    $("paint").hidden = false;
+    document.body.style.overflow = "hidden";
+    refreshPalette(); updateHint(); drawPaint();
+    requestAnimationFrame(function () { requestAnimationFrame(function () { if (paint) fitView(); }); });
+    $("pBack").focus();
+  }
+  function closePaint() {
+    $("paint").hidden = true; document.body.style.overflow = "";
+    paint = null; ptrs = {};
+    $("pCanvas").width = 1; $("pCanvas").height = 1;
+    $("paintbtn").focus();
+  }
+  function savePainting() {
+    var s = paint; if (!s) return;
+    if (!state.downloads) { toast("Saving files works once this page is open in a normal browser."); return; }
+    var c = newCanvas(s.w, s.h), g = c.getContext("2d");
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, s.w, s.h);
+    g.drawImage(s.pc, 0, 0);
+    if (s.lines) g.drawImage(state.canvases.outlines, 0, 0);
+    g.drawImage(s.nc, 0, 0);
+    c.toBlob(function (b) { if (b) save(stem() + "_painted.png", b); }, "image/png");
+  }
+  $("paintbtn").addEventListener("click", openPaint);
+  $("pBack").addEventListener("click", closePaint);
+  $("pUndo").addEventListener("click", undoPaint);
+  $("pHint").addEventListener("click", function () { if (!paint) return; paint.hint = !paint.hint; setToggle("pHint", paint.hint); updateHint(); drawPaint(); });
+  $("pCheck").addEventListener("click", function () { if (!paint) return; paint.check = !paint.check; setToggle("pCheck", paint.check); });
+  $("pLines").addEventListener("click", function () { if (!paint) return; paint.lines = !paint.lines; setToggle("pLines", paint.lines); drawPaint(); });
+  var peekBtn = $("pPeek");
+  function peek(on) { if (!paint) return; paint.peek = on; drawPaint(); }
+  peekBtn.addEventListener("pointerdown", function (e) { try { peekBtn.setPointerCapture(e.pointerId); } catch (err) {} peek(true); });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { peekBtn.addEventListener(ev, function () { peek(false); }); });
+  peekBtn.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); peek(true); } });
+  peekBtn.addEventListener("keyup", function () { peek(false); });
+  $("pFit").addEventListener("click", function () { if (paint) fitView(); });
+  $("pIn").addEventListener("click", function () { if (paint) zoomCentre(1.4); });
+  $("pOut").addEventListener("click", function () { if (paint) zoomCentre(1 / 1.4); });
+  $("pSave").addEventListener("click", savePainting);
+  $("pDoneSave").addEventListener("click", savePainting);
+  $("pDoneKeep").addEventListener("click", function () { $("pDone").hidden = true; });
+  document.addEventListener("keydown", function (e) {
+    if (!paint) return;
+    if (e.key === "Escape") { closePaint(); }
+    else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undoPaint(); }
+  });
+  window.addEventListener("resize", function () {
+    if (!paint) return;
+    var atFit = Math.abs(paint.view.s - paint.fit) < 1e-6;
+    var old = paint.fit; fitView();
+    if (!atFit) { /* keep the person's zoom, just keep it on screen */ paint.view.s = Math.max(paint.fit * 0.6, Math.min(paint.fit * 10, paint.view.s * (paint.fit / old))); clampView(); applyView(); }
+  });
 
   // ---------- downloads: normal browser downloads ----------
   state.downloads = {
