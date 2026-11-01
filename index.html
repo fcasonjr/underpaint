@@ -25362,13 +25362,15 @@ function pictureThumbUrl(p) {
     clampView(); applyView();
   }
   function zoomCentre(factor) { var r = $("pView").getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, factor); }
-  var ptrs = {}, tapOK = false;
+  var ptrs = {}, tapOK = false, penDown = null, penT = 0, lastEnd = 0;
   function ptrList() { return Object.keys(ptrs).map(function (k) { return ptrs[k]; }); }
   (function wirePaintView() {
     var view = $("pView");
     view.addEventListener("pointerdown", function (e) {
       if (!paint) return;
       if (e.target.closest && e.target.closest("button")) return;   // zoom buttons and the finished card keep their own taps
+      if (e.pointerType === "pen") { ptrs = {}; penDown = e.pointerId; penT = Date.now(); }               // Apple Pencil: ignore a resting palm
+      else if (penDown !== null && Date.now() - penT < 2000) return;
       try { view.setPointerCapture(e.pointerId); } catch (err) {}
       ptrs[e.pointerId] = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false };
       tapOK = Object.keys(ptrs).length === 1;
@@ -25392,12 +25394,21 @@ function pictureThumbUrl(p) {
       if (pt.moved) { tapOK = false; paint.view.tx += dx; paint.view.ty += dy; clampView(); applyView(); }
     });
     function end(e, cancelled) {
+      if (e.pointerId === penDown) penDown = null;
       var pt = ptrs[e.pointerId]; if (!pt) return;
       delete ptrs[e.pointerId];
-      if (!cancelled && tapOK && !pt.moved && paint) paintAt(e.clientX, e.clientY);
+      lastEnd = Date.now();
+      // Safari can cancel a Pencil tap instead of ending it, so a cancelled pen tap that did not move still counts
+      if ((!cancelled || e.pointerType === "pen") && tapOK && !pt.moved && paint) paintAt(e.clientX, e.clientY);
       if (!Object.keys(ptrs).length) tapOK = false;
     }
     view.addEventListener("pointerup", function (e) { end(e, false); });
+    // Fallback: if a tap reached us only as a click (no usable pointer events), paint from the click.
+    view.addEventListener("click", function (e) {
+      if (!paint || Date.now() - lastEnd < 700) return;
+      if (e.target.closest && e.target.closest("button")) return;
+      paintAt(e.clientX, e.clientY);
+    });
     view.addEventListener("pointercancel", function (e) { end(e, true); });
     view.addEventListener("wheel", function (e) {
       if (!paint) return; e.preventDefault();
@@ -25448,7 +25459,7 @@ function pictureThumbUrl(p) {
   function closePaint() {
     flushSave();
     $("paint").hidden = true; document.body.style.overflow = "";
-    paint = null; ptrs = {};
+    paint = null; ptrs = {}; penDown = null;
     $("pCanvas").width = 1; $("pCanvas").height = 1;
     if (state.fromGallery) openGallery(); else $("paintbtn").focus();
   }
