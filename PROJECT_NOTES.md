@@ -62,6 +62,8 @@ Progress autosaves (700 ms after each fill, on Back, and when the tab is hidden)
 
 Apple Pencil handling (2026-11-01, after the user reported the Pencil did nothing while mouse and finger worked): pen taps paint on up or on cancel, a resting palm (touch) is ignored while the pen is down (2 s guard), and a click fallback paints if no pointer events reach the view. Verified only with synthetic pen events in headless Chromium, not on a real Pencil.
 
+Paint mode has a **Start over** button (two taps) and a **Paint it again** button on the finished card; both erase all colors and save the cleared state (added 2026-11-01).
+
 ## What is in the downloaded zip
 
 `underpaint.psd` (layers top to bottom: Numbers, Outlines (set as Reference), Paint here, Paper, hidden Color key + numbers, hidden Color key), `numbered_sheet.png`, `lines_and_numbers_transparent.png`, `outlines_only_transparent.png`, `lines_over_photo.png`, `color_key.png`, `color_key_numbered.png`, `legend.png` (numbered chips in swatch order, for Procreate's Reference window), `palette.txt`, and one `palette_<from>-<to>.swatches` per 30 colors.

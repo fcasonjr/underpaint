@@ -375,6 +375,7 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
       <li><b>Tap a spot</b> with the same number to fill it. With <b>Show where</b> on, the spots that use the selected color glow blue so they are easy to find.</li>
       <li><b>Wrong color?</b> With <b>Match numbers</b> on, the app tells you which number that spot is and wiggles the right square. Turn it off to paint any color anywhere, like a normal coloring page.</li>
       <li><b>Move around:</b> pinch or scroll to zoom, drag to move, <b>Fit</b> to see everything. <b>Undo</b> takes back the last fill. Hold <b>Peek</b> to see the finished colors, and switch <b>Lines</b> off to see the picture without outlines.</li>
+      <li><b>Start over</b> (tap twice) erases every color so you can paint the same picture again.</li>
       <li>Your painting is <b>saved on this device</b> as you go. Close the page and come back later, and press <b>Pictures to paint</b> to carry on. <b>Save picture</b> downloads what you have painted as a PNG to keep or share.</li>
     </ol>
     <p class="soft">For a first try, or for a younger painter, choose the <b>Easy to paint</b> preset before you press Paint it here: fewer colors and bigger spots.</p>
@@ -465,6 +466,7 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
     <button type="button" id="pCheck" class="toggle" aria-pressed="true" title="On: a color only fills spots with its number. Off: paint any color anywhere.">Match numbers</button>
     <button type="button" id="pLines" class="toggle" aria-pressed="true">Lines</button>
     <button type="button" id="pPeek" title="Hold to see the finished colors">Peek</button>
+    <button type="button" id="pClear" title="Erase every color and start this picture again">Start over</button>
     <span class="spacer"></span>
     <span class="pprog" id="pProg" role="status"></span>
     <button type="button" id="pSave" class="primary">Save picture</button>
@@ -476,7 +478,7 @@ button.toggle[aria-pressed="true"] { background: var(--accent); color: var(--acc
       <div class="pdone" id="pDone" hidden>
         <b>All painted!</b>
         <span class="note">Every spot is filled in. Save your picture, or switch Lines off to see it without outlines.</span>
-        <div class="row2"><button type="button" class="primary" id="pDoneSave">Save picture</button><button type="button" id="pDoneKeep">Keep looking</button></div>
+        <div class="row2"><button type="button" class="primary" id="pDoneSave">Save picture</button><button type="button" id="pDoneKeep">Keep looking</button><button type="button" id="pDoneAgain">Paint it again</button></div>
       </div>
     </div>
     <div class="ppal" id="pPal" role="group" aria-label="Colors"></div>
@@ -25457,7 +25459,7 @@ function pictureThumbUrl(p) {
     $("pBack").focus();
   }
   function closePaint() {
-    flushSave();
+    flushSave(); resetClear();
     $("paint").hidden = true; document.body.style.overflow = "";
     paint = null; ptrs = {}; penDown = null;
     $("pCanvas").width = 1; $("pCanvas").height = 1;
@@ -25488,6 +25490,20 @@ function pictureThumbUrl(p) {
   $("pFit").addEventListener("click", function () { if (paint) fitView(); });
   $("pIn").addEventListener("click", function () { if (paint) zoomCentre(1.4); });
   $("pOut").addEventListener("click", function () { if (paint) zoomCentre(1 / 1.4); });
+  var clearT = null;
+  function resetClear() { clearTimeout(clearT); clearT = null; $("pClear").textContent = "Start over"; }
+  function clearPainting() {
+    var s = paint; if (!s) return;
+    for (var k = 1; k <= s.reg.n; k++) if (s.painted[k]) applyRegion(k, 0);
+    s.undo = []; s.sel = 1; for (var i = 1; i < s.remaining.length; i++) if (s.remaining[i] > 0) { s.sel = i; break; }
+    $("pDone").hidden = true; updateHint(); drawPaint(); refreshPalette(); flushSave();
+  }
+  $("pClear").addEventListener("click", function () {
+    if (!paint) return;
+    if (!clearT) { $("pClear").textContent = "Tap again to erase all"; clearT = setTimeout(resetClear, 3500); return; }
+    resetClear(); clearPainting();
+  });
+  $("pDoneAgain").addEventListener("click", clearPainting);
   $("pSave").addEventListener("click", savePainting);
   $("pDoneSave").addEventListener("click", savePainting);
   $("pDoneKeep").addEventListener("click", function () { $("pDone").hidden = true; });
